@@ -533,10 +533,8 @@ function onSumarFinal(){
 
   showToast("+" + piezas.toLocaleString("es-AR") + " piezas → " + FIELD_LABELS[builder.columna]);
 
-  builder.cantidad = "";
-  builder.columna = null;
   renderList();
-  goStep(1); // vuelve al menú de inicio para seguir cargando el mismo artículo
+  closeSheet(); // vuelve al listado principal (index)
 }
 
 function onDeshacer(){

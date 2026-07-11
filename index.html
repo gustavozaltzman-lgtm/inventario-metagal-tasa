@@ -61,37 +61,41 @@
   .sheet{background:#fff;width:100%;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;
     padding:16px;animation:up .18s ease-out;}
   @keyframes up{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-  .sheet-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+  .sheet-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
   .sheet-header .pn{font-size:18px;font-weight:800;}
   .sheet-header .close{font-size:22px;color:var(--muted);background:none;border:none;padding:4px;}
   .new-badge{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);
     background:#e0f2fe;border-radius:6px;padding:2px 8px;margin-bottom:8px;}
-  .pass-info{font-size:12px;color:var(--muted);margin-bottom:10px;}
 
   .field{margin-bottom:12px;}
   .field label{display:block;font-size:12px;color:var(--text);font-weight:700;margin-bottom:5px;}
   .field input[type=number],.field input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
     background:#fff;color:var(--text);font-size:16px;outline:none;}
   .field input:focus{border-color:var(--accent);}
-  .hint{font-size:11px;color:var(--accent);margin-top:4px;}
+  .hint{font-size:11px;color:var(--accent);margin:6px 0 12px;}
   .divider{height:1px;background:var(--border);margin:16px 0;}
 
-  .qty-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
-  .qty-grid .field{margin-bottom:14px;}
-  .qty-grid .field label{min-height:30px;}
+  .cantidad-display{font-size:38px;font-weight:800;text-align:center;padding:14px;background:var(--panel2);
+    border-radius:10px;margin-bottom:10px;color:var(--accent);letter-spacing:1px;font-variant-numeric:tabular-nums;}
+  .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+  .numpad button{padding:16px 0;font-size:20px;font-weight:700;border-radius:10px;border:1px solid var(--border);
+    background:#fff;color:var(--text);}
+  .numpad button:active{background:var(--panel2);}
+  .numpad button.clear{color:var(--red);}
+  .numpad button.back{color:var(--amber);}
 
-  .accum-box{background:var(--panel2);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
-  .accum-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--text);}
-  .accum-row span{color:var(--muted);}
-  .accum-row.total{border-top:1px solid var(--border);margin-top:4px;padding-top:8px;}
-  .accum-row.total span,.accum-row.total b{color:var(--text);font-weight:800;}
-  .pass-label{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:10px;}
+  .unidad-row{display:flex;gap:8px;margin:14px 0 0;}
+  .unidad-btn{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:#fff;
+    font-weight:700;font-size:14px;color:var(--text);}
+  .unidad-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 
-  .total-box{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);
-    border-radius:10px;padding:12px 14px;margin-top:6px;}
-  .total-box .big{font-size:22px;font-weight:800;color:var(--accent);}
+  .columna-label{font-size:12px;color:var(--text);font-weight:700;margin:14px 0 8px;}
+  .columna-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+  .columna-btn{padding:12px 6px;border-radius:10px;border:1px solid var(--border);background:#fff;
+    font-weight:700;font-size:12px;color:var(--text);text-align:center;}
+  .columna-btn.active{background:#e0f2fe;border-color:var(--accent);color:var(--accent);}
 
-  .menu-row{display:flex;gap:8px;margin-bottom:14px;}
+  .menu-row{display:flex;gap:8px;margin:16px 0;}
   .menu-btn{flex:1;padding:12px 6px;border-radius:10px;font-size:13px;font-weight:700;
     border:1px solid var(--border);background:var(--panel2);color:var(--text);text-align:center;
     display:flex;flex-direction:column;align-items:center;gap:2px;}
@@ -100,6 +104,25 @@
   .menu-btn.warn{color:var(--amber);border-color:#fde68a;background:#fffbeb;}
   .menu-btn.danger{color:var(--red);border-color:#fecaca;background:#fef2f2;}
   .menu-btn:active{filter:brightness(0.95);}
+  .menu-btn:disabled{opacity:.4;}
+
+  .log-box{margin-bottom:14px;}
+  .log-box .log-title{font-size:11px;color:var(--muted);margin-bottom:6px;}
+  .log-list{max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;}
+  .log-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;font-size:12px;
+    border-bottom:1px solid var(--border);}
+  .log-row:last-child{border-bottom:none;}
+  .log-row .del{color:var(--red);background:none;border:none;font-size:15px;padding:2px 8px;flex:none;}
+  .log-empty{font-size:12px;color:var(--muted);padding:12px;text-align:center;}
+
+  .accum-box{background:var(--panel2);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
+  .accum-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--text);}
+  .accum-row span{color:var(--muted);}
+  .accum-row.total{border-top:1px solid var(--border);margin-top:4px;padding-top:8px;}
+  .accum-row.total span,.accum-row.total b{color:var(--text);font-weight:800;}
+
+  .delete-link{display:block;text-align:center;color:var(--red);font-size:13px;margin-top:4px;
+    background:none;border:none;padding:8px;width:100%;}
 
   /* scanner overlay */
   #scanOverlay{position:fixed;inset:0;background:#000;z-index:60;display:none;flex-direction:column;}
@@ -129,7 +152,7 @@
         placeholder="Escanear o escribir Part Number...">
       <button class="icon-btn" id="cameraBtn" title="Escanear con cámara">📷</button>
     </div>
-    <div class="search-hint">Si el artículo ya existe, te deja cargar otra pasada y se suma al acumulado.</div>
+    <div class="search-hint">Cantidad → Unidad (Caja/Unidades) → Columna → Sumar. Se acumula por artículo.</div>
   </header>
 
   <main>
@@ -165,18 +188,19 @@
 
 <script>
 /* ---------------- Estado: arranca vacío, se carga a medida que se cuenta ---------------- */
-/* Cada artículo acumula "pasadas": cada vez que se vuelve a contar, lo que se carga
-   se SUMA a lo acumulado (no lo reemplaza). Ej: pasada 1 = 50 cajas, pasada 2 = 20 cajas
-   -> acumulado = 70 cajas. */
-const STORAGE_KEY = "inv_local_v3";
+/* Cada carga es una "carga puntual": cantidad + unidad (CAJA x SPQ, o UNIDADES directo) +
+   columna de destino. Cada SUMAR agrega una entrada al log del artículo y suma piezas al
+   total de esa columna. DESHACER saca la última carga; ELIMINAR saca una carga puntual
+   específica (por defecto la última) sin tocar el resto. */
+const STORAGE_KEY = "inv_local_v4";
 const QTY_FIELDS = ["cajasCerradas","piezasAbierta","piezasLinea","piezasScrap","piezasTerminado","piezasModuleCase"];
 const FIELD_LABELS = {
-  cajasCerradas: "Cajas cerradas en depósito",
-  piezasAbierta: "CAJA ABIERTA - x unidad",
-  piezasLinea: "LÍNEA - x unidad",
-  piezasScrap: "SCRAP - x unidad",
-  piezasTerminado: "PRODUCTO TERMINADO - x unidad",
-  piezasModuleCase: "MODULE CASE - x unidad"
+  cajasCerradas: "CAJAS CERRADAS",
+  piezasAbierta: "CAJA ABIERTA",
+  piezasLinea: "LÍNEA",
+  piezasScrap: "SCRAP",
+  piezasTerminado: "PRODUCTO TERMINADO",
+  piezasModuleCase: "MODULE CASE"
 };
 
 function emptyTotals(){
@@ -200,15 +224,21 @@ function normPn(s){
 function findEntry(pnRaw){
   return state.entries[normPn(pnRaw)] || null;
 }
-function pieceCerradas(entry){
-  const cajas = Number(entry.totals.cajasCerradas)||0;
-  const spq = Number(entry.spq)||0;
-  return cajas * spq;
+function ensureEntry(pnRaw){
+  const key = normPn(pnRaw);
+  let entry = state.entries[key];
+  if(!entry){
+    entry = { pn: pnRaw, itemNo: state.nextItem, desc: "", spq: "", totals: emptyTotals(), log: [] };
+    state.entries[key] = entry;
+    state.nextItem += 1;
+  }
+  return entry;
+}
+function sumTotals(totals){
+  return QTY_FIELDS.reduce((s,f) => s + (Number(totals[f])||0), 0);
 }
 function totalPiezas(entry){
-  const t = entry.totals;
-  return pieceCerradas(entry) + (Number(t.piezasAbierta)||0) + (Number(t.piezasLinea)||0) +
-    (Number(t.piezasScrap)||0) + (Number(t.piezasTerminado)||0) + (Number(t.piezasModuleCase)||0);
+  return sumTotals(entry.totals);
 }
 function orderedEntries(){
   return Object.values(state.entries).sort((a,b) => a.itemNo - b.itemNo);
@@ -245,7 +275,7 @@ function renderList(){
   emptyMsg.style.display = noneAtAll ? "block" : "none";
   items.forEach(e => {
     const total = totalPiezas(e);
-    const passes = e.passes.length;
+    const cargas = e.log.length;
     const div = document.createElement("div");
     div.className = "item-card";
     div.innerHTML = `
@@ -253,7 +283,7 @@ function renderList(){
       <div class="item-info">
         <div class="pn">${e.itemNo}. ${e.pn}</div>
         <div class="desc">${e.desc ? e.desc : "(sin descripción)"}</div>
-        <div class="meta">${e.spq ? "SPQ " + e.spq : "SPQ no cargado"} · ${passes} pasada${passes!==1?"s":""}</div>
+        <div class="meta">${e.spq ? "SPQ " + e.spq : "SPQ no cargado"} · ${cargas} carga${cargas!==1?"s":""}</div>
       </div>
       <div class="item-total">${total.toLocaleString("es-AR")}<span class="lbl">piezas</span></div>
     `;
@@ -263,190 +293,231 @@ function renderList(){
   renderProgress();
 }
 
-/* ---------------- Detalle / carga (existente o nuevo) ---------------- */
+/* ---------------- Detalle / carga puntual (cantidad -> unidad -> columna -> operador) ---------------- */
 const overlay = document.getElementById("overlay");
 const sheet = document.getElementById("sheet");
 let currentPn = null;
-let isNewEntry = false;
+let builder = { cantidad: "", unidad: "CAJA", columna: null };
 
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
-function qtyFieldsHtml(){
-  const cells = QTY_FIELDS.map(f => `
-    <div class="field">
-      <label>${FIELD_LABELS[f]}${f === "cajasCerradas" ? " (x SPQ)" : ""}</label>
-      <input type="number" inputmode="numeric" min="0" id="f_${f}" value="" placeholder="0">
-      ${f === "cajasCerradas" ? '<div class="hint" id="hintCerradas"></div>' : ""}
-    </div>
-  `).join("");
-  return `<div class="qty-grid">${cells}</div>`;
-}
-
 function openSheet(pnRaw){
   const pn = pnRaw.trim();
   if(!pn) return;
-  const entry = findEntry(pn);
-  isNewEntry = !entry;
   currentPn = pn;
-
-  if(isNewEntry){
-    sheet.innerHTML = `
-      <div class="sheet-header">
-        <div>
-          <div class="new-badge">Artículo nuevo</div><br>
-          <div class="pn">${state.nextItem}. ${escapeHtml(pn)}</div>
-        </div>
-        <button class="close" id="sheetClose">✕</button>
-      </div>
-      <div class="divider"></div>
-      <div class="menu-row">
-        <button class="menu-btn primary" id="saveBtn"><span class="ic">✔</span>Crear artículo</button>
-      </div>
-      <div class="divider"></div>
-      <div class="field">
-        <label>Descripción (opcional)</label>
-        <input type="text" id="f_desc" value="" placeholder="Ej: FRAME S/A, RH">
-      </div>
-      <div class="field">
-        <label>SPQ (Q x Caja) — opcional</label>
-        <input type="number" inputmode="numeric" min="0" id="f_spq" value="" placeholder="0">
-      </div>
-      <div class="divider"></div>
-      ${qtyFieldsHtml()}
-      <div class="divider"></div>
-      <div class="total-box">
-        <span>Total piezas</span>
-        <span class="big" id="totalBig">0</span>
-      </div>
-    `;
-  } else {
-    sheet.innerHTML = `
-      <div class="sheet-header">
-        <div>
-          <div class="pn">${entry.itemNo}. ${escapeHtml(entry.pn)}</div>
-        </div>
-        <button class="close" id="sheetClose">✕</button>
-      </div>
-      <div class="pass-info">${entry.passes.length
-        ? "Contado en " + entry.passes.length + " pasada" + (entry.passes.length>1?"s":"") + " hasta ahora"
-        : "Todavía sin cantidades cargadas"}</div>
-      <div class="menu-row">
-        <button class="menu-btn primary" id="saveBtn"><span class="ic">✔</span>Sumar</button>
-        ${entry.passes.length ? '<button class="menu-btn warn" id="undoBtn"><span class="ic">↩</span>Deshacer</button>' : ''}
-        <button class="menu-btn danger" id="deleteBtn"><span class="ic">🗑</span>Eliminar</button>
-      </div>
-      <div class="divider"></div>
-      <div class="field">
-        <label>Descripción (opcional)</label>
-        <input type="text" id="f_desc" value="${escapeHtml(entry.desc||"")}" placeholder="Ej: FRAME S/A, RH">
-      </div>
-      <div class="field">
-        <label>SPQ (Q x Caja) — opcional</label>
-        <input type="number" inputmode="numeric" min="0" id="f_spq" value="${entry.spq ?? ""}" placeholder="0">
-      </div>
-      <div class="divider"></div>
-      <div class="pass-label">Nueva pasada: se suma al resumen de abajo</div>
-      ${qtyFieldsHtml()}
-      <div class="divider"></div>
-      <div class="accum-box">
-        ${QTY_FIELDS.map(f => `<div class="accum-row"><span>${FIELD_LABELS[f]}</span><b>${(entry.totals[f]||0).toLocaleString("es-AR")}</b></div>`).join("")}
-        <div class="accum-row total"><span>Total piezas acumulado</span><b>${totalPiezas(entry).toLocaleString("es-AR")}</b></div>
-      </div>
-      <div class="total-box">
-        <span>Total piezas si guardo ahora</span>
-        <span class="big" id="totalBig">${totalPiezas(entry).toLocaleString("es-AR")}</span>
-      </div>
-    `;
-  }
-
+  builder = { cantidad: "", unidad: "CAJA", columna: null };
+  renderSheet();
   overlay.classList.add("open");
-  document.getElementById("sheetClose").addEventListener("click", closeSheet);
-  document.getElementById("saveBtn").addEventListener("click", onSave);
-
-  const ids = ["f_desc","f_spq", ...QTY_FIELDS.map(f => "f_"+f)];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.addEventListener("input", updateSheetTotals);
-  });
-  if(!isNewEntry){
-    document.getElementById("deleteBtn").addEventListener("click", onDelete);
-    const undoBtn = document.getElementById("undoBtn");
-    if(undoBtn) undoBtn.addEventListener("click", onUndo);
-  }
-  updateSheetTotals();
-  if(isNewEntry) document.getElementById("f_desc").focus();
 }
 
-function updateSheetTotals(){
+function renderSheet(){
   const entry = findEntry(currentPn);
-  const base = entry ? entry.totals : emptyTotals();
+  const itemNo = entry ? entry.itemNo : state.nextItem;
+  const desc = entry ? entry.desc : "";
+  const spq = entry ? entry.spq : "";
+  const totals = entry ? entry.totals : emptyTotals();
+  const log = entry ? entry.log : [];
+
+  const columnaButtonsHtml = QTY_FIELDS.map(f => `
+    <button class="columna-btn ${builder.columna===f?'active':''}" data-col="${f}">${FIELD_LABELS[f]}</button>
+  `).join("");
+
+  const logRowsHtml = log.length
+    ? log.map((item, idx) => {
+        const unidadLbl = item.unidad === "CAJA" ? ("caja" + (item.cantidad!==1?"s":"")) : ("unidad" + (item.cantidad!==1?"es":""));
+        return `<div class="log-row">
+          <span>+${item.cantidad} ${unidadLbl} → ${FIELD_LABELS[item.columna]} (${item.piezas.toLocaleString("es-AR")} pzs)</span>
+          <button class="del" data-idx="${idx}" title="Eliminar esta carga">✕</button>
+        </div>`;
+      }).reverse().join("")
+    : '<div class="log-empty">Sin cargas todavía para este artículo.</div>';
+
+  sheet.innerHTML = `
+    <div class="sheet-header">
+      <div>
+        ${!entry ? '<div class="new-badge">Artículo nuevo</div><br>' : ''}
+        <div class="pn">${itemNo}. ${escapeHtml(currentPn)}</div>
+      </div>
+      <button class="close" id="sheetClose">✕</button>
+    </div>
+
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="f_desc" value="${escapeHtml(desc||"")}" placeholder="Ej: FRAME S/A, RH">
+    </div>
+    <div class="field">
+      <label>SPQ (Q x Caja) — opcional</label>
+      <input type="number" inputmode="numeric" min="0" id="f_spq" value="${spq ?? ""}" placeholder="0">
+    </div>
+    <div class="divider"></div>
+
+    <div class="cantidad-display" id="cantidadDisplay">${builder.cantidad || "0"}</div>
+    <div class="numpad" id="numpad">
+      ${["1","2","3","4","5","6","7","8","9"].map(n=>`<button data-num="${n}">${n}</button>`).join("")}
+      <button class="clear" data-action="clear">C</button>
+      <button data-num="0">0</button>
+      <button class="back" data-action="back">⌫</button>
+    </div>
+
+    <div class="unidad-row">
+      <button class="unidad-btn ${builder.unidad==='CAJA'?'active':''}" data-unidad="CAJA">CAJA</button>
+      <button class="unidad-btn ${builder.unidad==='UNIDADES'?'active':''}" data-unidad="UNIDADES">UNIDADES</button>
+    </div>
+    <div class="hint" id="hintCaja" style="${builder.unidad==='CAJA'?'':'display:none'}"></div>
+
+    <div class="columna-label">Columna</div>
+    <div class="columna-grid" id="columnaGrid">${columnaButtonsHtml}</div>
+
+    <div class="menu-row">
+      <button class="menu-btn primary" id="sumarBtn"><span class="ic">✔</span>Sumar</button>
+      <button class="menu-btn warn" id="deshacerBtn" ${log.length?"":"disabled"}><span class="ic">↩</span>Deshacer</button>
+      <button class="menu-btn danger" id="eliminarBtn" ${log.length?"":"disabled"}><span class="ic">🗑</span>Eliminar</button>
+    </div>
+
+    <div class="log-box">
+      <div class="log-title">Cargas de este artículo</div>
+      <div class="log-list">${logRowsHtml}</div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="accum-box">
+      ${QTY_FIELDS.map(f => `<div class="accum-row"><span>${FIELD_LABELS[f]}</span><b>${(totals[f]||0).toLocaleString("es-AR")}</b></div>`).join("")}
+      <div class="accum-row total"><span>Total piezas</span><b>${sumTotals(totals).toLocaleString("es-AR")}</b></div>
+    </div>
+
+    ${entry ? '<button class="delete-link" id="deleteArticleBtn">Eliminar artículo completo</button>' : ''}
+  `;
+
+  document.getElementById("sheetClose").addEventListener("click", closeSheet);
+  document.getElementById("f_desc").addEventListener("input", onMetaChange);
+  document.getElementById("f_spq").addEventListener("input", onMetaChange);
+  document.getElementById("numpad").addEventListener("click", onNumpadClick);
+  document.querySelectorAll(".unidad-btn").forEach(b => b.addEventListener("click", onUnidadClick));
+  document.getElementById("columnaGrid").addEventListener("click", onColumnaClick);
+  document.getElementById("sumarBtn").addEventListener("click", onSumar);
+  document.getElementById("deshacerBtn").addEventListener("click", onDeshacer);
+  document.getElementById("eliminarBtn").addEventListener("click", onEliminarUltima);
+  document.querySelector(".log-list").addEventListener("click", onLogRowDelete);
+  const delArticleBtn = document.getElementById("deleteArticleBtn");
+  if(delArticleBtn) delArticleBtn.addEventListener("click", onDeleteArticle);
+
+  updateCajaHint();
+}
+
+function updateCajaHint(){
+  const hint = document.getElementById("hintCaja");
+  if(!hint) return;
   const spqEl = document.getElementById("f_spq");
   const spq = spqEl ? Number(spqEl.value)||0 : 0;
-  const merged = {};
-  QTY_FIELDS.forEach(f => {
-    const el = document.getElementById("f_"+f);
-    const typed = el ? Number(el.value)||0 : 0;
-    merged[f] = (Number(base[f])||0) + typed;
-  });
-  const cerradasPiezas = merged.cajasCerradas * spq;
-  const total = cerradasPiezas + merged.piezasAbierta + merged.piezasLinea + merged.piezasScrap + merged.piezasTerminado + merged.piezasModuleCase;
-
-  const hint = document.getElementById("hintCerradas");
-  if(hint){
-    hint.textContent = (merged.cajasCerradas > 0 && spq > 0)
-      ? ("= " + cerradasPiezas.toLocaleString("es-AR") + " piezas acumuladas")
-      : "";
-  }
-  const big = document.getElementById("totalBig");
-  if(big) big.textContent = total.toLocaleString("es-AR");
+  const cantidad = Number(builder.cantidad)||0;
+  hint.textContent = spq > 0
+    ? ("x SPQ " + spq + " = " + (cantidad*spq).toLocaleString("es-AR") + " piezas")
+    : "Cargá el SPQ para poder sumar en cajas";
 }
 
-function onSave(){
-  const key = normPn(currentPn);
-  let entry = state.entries[key];
-  const isCreating = !entry;
-  if(!entry){
-    entry = { pn: currentPn, itemNo: state.nextItem, desc: "", spq: "", totals: emptyTotals(), passes: [] };
+function onMetaChange(){
+  const entry = ensureEntry(currentPn);
+  entry.desc = document.getElementById("f_desc").value;
+  entry.spq = document.getElementById("f_spq").value;
+  saveState();
+  renderList();
+  updateCajaHint();
+}
+
+function onNumpadClick(e){
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  if(btn.dataset.num !== undefined){
+    if(builder.cantidad.length >= 6) return;
+    builder.cantidad = (builder.cantidad === "0" ? "" : builder.cantidad) + btn.dataset.num;
+  } else if(btn.dataset.action === "back"){
+    builder.cantidad = builder.cantidad.slice(0, -1);
+  } else if(btn.dataset.action === "clear"){
+    builder.cantidad = "";
   }
-  entry.desc = document.getElementById("f_desc").value.trim();
+  document.getElementById("cantidadDisplay").textContent = builder.cantidad || "0";
+  updateCajaHint();
+}
+
+function onUnidadClick(e){
+  builder.unidad = e.currentTarget.dataset.unidad;
+  document.querySelectorAll(".unidad-btn").forEach(b => b.classList.toggle("active", b.dataset.unidad === builder.unidad));
+  const hint = document.getElementById("hintCaja");
+  hint.style.display = builder.unidad === "CAJA" ? "" : "none";
+  updateCajaHint();
+}
+
+function onColumnaClick(e){
+  const btn = e.target.closest(".columna-btn");
+  if(!btn) return;
+  builder.columna = btn.dataset.col;
+  document.querySelectorAll(".columna-btn").forEach(b => b.classList.toggle("active", b.dataset.col === builder.columna));
+}
+
+function onSumar(){
+  const cantidad = Number(builder.cantidad) || 0;
+  if(cantidad <= 0){ showToast("Ingresá una cantidad."); return; }
+  if(!builder.columna){ showToast("Elegí a qué columna corresponde."); return; }
+  const spqVal = Number(document.getElementById("f_spq").value) || 0;
+  if(builder.unidad === "CAJA" && spqVal <= 0){ showToast("Cargá el SPQ para poder sumar en cajas."); return; }
+
+  const entry = ensureEntry(currentPn);
+  entry.desc = document.getElementById("f_desc").value;
   entry.spq = document.getElementById("f_spq").value;
 
-  const pass = { ts: Date.now() };
-  let hasQty = false;
-  QTY_FIELDS.forEach(f => {
-    const v = Number(document.getElementById("f_"+f).value) || 0;
-    pass[f] = v;
-    if(v !== 0) hasQty = true;
-    entry.totals[f] = (Number(entry.totals[f])||0) + v;
-  });
-  if(hasQty) entry.passes.push(pass);
-
-  state.entries[key] = entry;
-  if(isCreating) state.nextItem += 1;
+  const piezas = builder.unidad === "CAJA" ? cantidad * spqVal : cantidad;
+  entry.log.push({ ts: Date.now(), columna: builder.columna, unidad: builder.unidad, cantidad, piezas });
+  entry.totals[builder.columna] = (Number(entry.totals[builder.columna])||0) + piezas;
   saveState();
-  closeSheet();
-  renderList();
 
-  if(isCreating) showToast("Artículo creado.");
-  else if(hasQty) showToast("Conteo sumado (pasada " + entry.passes.length + "). Total: " + totalPiezas(entry).toLocaleString("es-AR") + " piezas.");
-  else showToast("Datos actualizados.");
+  showToast("+" + piezas.toLocaleString("es-AR") + " piezas → " + FIELD_LABELS[builder.columna]);
+
+  builder.cantidad = "";
+  builder.columna = null;
+  renderList();
+  renderSheet();
 }
 
-function onUndo(){
+function onDeshacer(){
   const entry = findEntry(currentPn);
-  if(!entry || entry.passes.length === 0) return;
-  if(!confirm("¿Deshacer la última pasada cargada para este artículo?")) return;
-  const last = entry.passes.pop();
-  QTY_FIELDS.forEach(f => { entry.totals[f] = (Number(entry.totals[f])||0) - (Number(last[f])||0); });
+  if(!entry || entry.log.length === 0) return;
+  const last = entry.log.pop();
+  entry.totals[last.columna] = (Number(entry.totals[last.columna])||0) - last.piezas;
   saveState();
   renderList();
-  openSheet(currentPn);
-  showToast("Última pasada deshecha.");
+  renderSheet();
+  showToast("Deshecho: -" + last.piezas.toLocaleString("es-AR") + " piezas de " + FIELD_LABELS[last.columna]);
 }
 
-function onDelete(){
+function deleteLogEntry(idx){
+  const entry = findEntry(currentPn);
+  if(!entry || !entry.log[idx]) return;
+  const item = entry.log[idx];
+  const unidadLbl = item.unidad === "CAJA" ? "cajas" : "unidades";
+  if(!confirm("¿Eliminar esta carga puntual (+" + item.cantidad + " " + unidadLbl + " → " + FIELD_LABELS[item.columna] + ")?")) return;
+  entry.log.splice(idx, 1);
+  entry.totals[item.columna] = (Number(entry.totals[item.columna])||0) - item.piezas;
+  saveState();
+  renderList();
+  renderSheet();
+  showToast("Carga eliminada.");
+}
+
+function onEliminarUltima(){
+  const entry = findEntry(currentPn);
+  if(!entry || entry.log.length === 0) return;
+  deleteLogEntry(entry.log.length - 1);
+}
+
+function onLogRowDelete(e){
+  const btn = e.target.closest(".del");
+  if(!btn) return;
+  deleteLogEntry(Number(btn.dataset.idx));
+}
+
+function onDeleteArticle(){
   if(confirm("¿Eliminar " + currentPn + " y todo lo contado para este artículo?")){
     delete state.entries[normPn(currentPn)];
     saveState();
@@ -549,34 +620,31 @@ function exportExcel(){
   rows.push([]);
   rows.push([
     "Item","Part Number","Descripción","SPQ (Q x Caja)",
-    "Cajas cerradas acumuladas","Piezas caja cerrada en depósito","Piezas caja abierta en depósito",
-    "Piezas en línea","Piezas en scrap","Producto terminado","Module Case","Cantidad Total (piezas)","Pasadas contadas"
+    "Cajas cerradas (piezas)","Caja abierta (piezas)","Línea (piezas)",
+    "Scrap (piezas)","Producto terminado (piezas)","Module Case (piezas)",
+    "Cantidad Total (piezas)","Cargas registradas"
   ]);
 
   let grand = 0;
   items.forEach(e => {
     const t = e.totals;
-    const cerradas = pieceCerradas(e);
-    const abierta = Number(t.piezasAbierta)||0;
-    const linea = Number(t.piezasLinea)||0;
-    const scrap = Number(t.piezasScrap)||0;
-    const term = Number(t.piezasTerminado)||0;
-    const moduleCase = Number(t.piezasModuleCase)||0;
-    const total = cerradas+abierta+linea+scrap+term+moduleCase;
+    const total = sumTotals(t);
     grand += total;
     rows.push([
       e.itemNo, e.pn, e.desc||"", Number(e.spq)||0,
-      Number(t.cajasCerradas)||0, cerradas, abierta, linea, scrap, term, moduleCase, total, e.passes.length
+      Number(t.cajasCerradas)||0, Number(t.piezasAbierta)||0, Number(t.piezasLinea)||0,
+      Number(t.piezasScrap)||0, Number(t.piezasTerminado)||0, Number(t.piezasModuleCase)||0,
+      total, e.log.length
     ]);
   });
 
   rows.push([]);
-  rows.push(["", "", "", "", "", "", "", "", "", "", "TOTAL GENERAL", grand, ""]);
+  rows.push(["", "", "", "", "", "", "", "", "", "TOTAL GENERAL", grand, ""]);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws["!cols"] = [
     {wch:5},{wch:22},{wch:32},{wch:10},
-    {wch:12},{wch:14},{wch:14},{wch:10},{wch:10},{wch:12},{wch:10},{wch:14},{wch:10}
+    {wch:14},{wch:14},{wch:10},{wch:10},{wch:16},{wch:12},{wch:14},{wch:12}
   ];
   ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:5} }];
 

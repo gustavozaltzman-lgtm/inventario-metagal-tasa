@@ -1,5 +1,8 @@
-const CACHE = "inv-metagal-v1";
-const SHELL = ["./", "./index.html", "./manifest.json", "./icon.svg"];
+const CACHE = "inv-local-v2";
+const SHELL = [
+  "./", "./index.html", "./manifest.json", "./icon.svg",
+  "./vendor/xlsx.full.min.js", "./vendor/html5-qrcode.min.js"
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));

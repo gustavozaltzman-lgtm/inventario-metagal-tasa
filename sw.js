@@ -1,4 +1,4 @@
-const CACHE = "inv-local-v7";
+const CACHE = "inv-local-v8";
 const SHELL = [
   "./", "./index.html", "./manifest.json", "./icon.svg",
   "./vendor/xlsx.full.min.js", "./vendor/html5-qrcode.min.js"

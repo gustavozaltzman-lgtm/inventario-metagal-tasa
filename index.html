@@ -55,47 +55,57 @@
   #exportBtn{background:var(--accent);color:#fff;}
   #resetBtn{background:var(--panel2);color:var(--red);border:1px solid var(--border);}
 
-  /* modal */
+  /* modal / wizard */
   .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:none;align-items:flex-end;}
   .overlay.open{display:flex;}
   .sheet{background:#fff;width:100%;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;
     padding:16px;animation:up .18s ease-out;}
   @keyframes up{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-  .sheet-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-  .sheet-header .pn{font-size:18px;font-weight:800;}
-  .sheet-header .close{font-size:22px;color:var(--muted);background:none;border:none;padding:4px;}
-  .new-badge{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);
-    background:#e0f2fe;border-radius:6px;padding:2px 8px;margin-bottom:8px;}
 
-  .field{margin-bottom:12px;}
-  .field label{display:block;font-size:12px;color:var(--text);font-weight:700;margin-bottom:5px;}
-  .field input[type=number],.field input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
-    background:#fff;color:var(--text);font-size:16px;outline:none;}
-  .field input:focus{border-color:var(--accent);}
-  .hint{font-size:11px;color:var(--accent);margin:6px 0 12px;}
+  .wizard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .wiz-nav{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);
+    color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .wiz-nav.invisible{visibility:hidden;}
+  .wizard-title{flex:1;text-align:center;}
+  .wizard-title .pn{font-size:15px;font-weight:800;}
+  .wizard-title .step-label{font-size:11px;color:var(--muted);margin-top:2px;}
+  .new-badge{display:inline-block;font-size:10px;font-weight:700;color:var(--accent);
+    background:#e0f2fe;border-radius:6px;padding:1px 7px;margin-bottom:3px;}
+
+  .field-compact{margin-bottom:10px;}
+  .field-compact input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+    background:#fff;color:var(--text);font-size:14px;outline:none;}
+  .field-compact input:focus{border-color:var(--accent);}
+
+  .wizard-question{text-align:center;font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;}
+
   .divider{height:1px;background:var(--border);margin:16px 0;}
 
-  .cantidad-display{font-size:38px;font-weight:800;text-align:center;padding:14px;background:var(--panel2);
-    border-radius:10px;margin-bottom:10px;color:var(--accent);letter-spacing:1px;font-variant-numeric:tabular-nums;}
+  .cantidad-display{font-size:40px;font-weight:800;text-align:center;padding:16px;background:var(--panel2);
+    border-radius:10px;margin-bottom:12px;color:var(--accent);letter-spacing:1px;font-variant-numeric:tabular-nums;}
   .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
-  .numpad button{padding:16px 0;font-size:20px;font-weight:700;border-radius:10px;border:1px solid var(--border);
+  .numpad button{padding:18px 0;font-size:21px;font-weight:700;border-radius:10px;border:1px solid var(--border);
     background:#fff;color:var(--text);}
   .numpad button:active{background:var(--panel2);}
   .numpad button.clear{color:var(--red);}
   .numpad button.back{color:var(--amber);}
 
-  .unidad-row{display:flex;gap:8px;margin:14px 0 0;}
-  .unidad-btn{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:#fff;
-    font-weight:700;font-size:14px;color:var(--text);}
-  .unidad-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .big-choice-col{display:flex;flex-direction:column;gap:12px;}
+  .big-choice{padding:28px 10px;border-radius:14px;border:2px solid var(--border);background:#fff;
+    font-size:20px;font-weight:800;color:var(--text);display:flex;flex-direction:column;gap:4px;align-items:center;}
+  .big-choice .sub{font-size:12px;font-weight:400;color:var(--muted);}
+  .big-choice.active{border-color:var(--accent);background:#e0f2fe;color:var(--accent);}
 
-  .columna-label{font-size:12px;color:var(--text);font-weight:700;margin:14px 0 8px;}
-  .columna-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
-  .columna-btn{padding:12px 6px;border-radius:10px;border:1px solid var(--border);background:#fff;
-    font-weight:700;font-size:12px;color:var(--text);text-align:center;}
+  .columna-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .columna-btn{padding:24px 8px;border-radius:12px;border:2px solid var(--border);background:#fff;
+    font-weight:700;font-size:14px;color:var(--text);text-align:center;}
   .columna-btn.active{background:#e0f2fe;border-color:var(--accent);color:var(--accent);}
 
-  .menu-row{display:flex;gap:8px;margin:16px 0;}
+  .preview-box{background:var(--panel2);border-radius:10px;padding:14px;text-align:center;font-size:14px;
+    margin-bottom:14px;}
+  .preview-box b{color:var(--accent);}
+
+  .menu-row{display:flex;gap:8px;margin-bottom:16px;}
   .menu-btn{flex:1;padding:12px 6px;border-radius:10px;font-size:13px;font-weight:700;
     border:1px solid var(--border);background:var(--panel2);color:var(--text);text-align:center;
     display:flex;flex-direction:column;align-items:center;gap:2px;}
@@ -106,9 +116,11 @@
   .menu-btn:active{filter:brightness(0.95);}
   .menu-btn:disabled{opacity:.4;}
 
+  .wizard-next{width:100%;margin-top:18px;}
+
   .log-box{margin-bottom:14px;}
   .log-box .log-title{font-size:11px;color:var(--muted);margin-bottom:6px;}
-  .log-list{max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;}
+  .log-list{max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;}
   .log-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;font-size:12px;
     border-bottom:1px solid var(--border);}
   .log-row:last-child{border-bottom:none;}
@@ -152,7 +164,7 @@
         placeholder="Escanear o escribir Part Number...">
       <button class="icon-btn" id="cameraBtn" title="Escanear con cámara">📷</button>
     </div>
-    <div class="search-hint">Cantidad → Unidad (Caja/Unidades) → Columna → Sumar. Se acumula por artículo.</div>
+    <div class="search-hint">Cantidad → Unidad → Columna → Confirmar. Se acumula por artículo.</div>
   </header>
 
   <main>
@@ -189,9 +201,9 @@
 <script>
 /* ---------------- Estado: arranca vacío, se carga a medida que se cuenta ---------------- */
 /* Cada carga es una "carga puntual": cantidad + unidad (CAJA x SPQ, o UNIDADES directo) +
-   columna de destino. Cada SUMAR agrega una entrada al log del artículo y suma piezas al
-   total de esa columna. DESHACER saca la última carga; ELIMINAR saca una carga puntual
-   específica (por defecto la última) sin tocar el resto. */
+   columna de destino. Se arma en 4 pantallas (asistente) para no tener que hacer scroll:
+   1) Cantidad  2) Unidad  3) Columna  4) Confirmar (log + resumen) -> Sumar/Deshacer/Eliminar.
+   Al Sumar, se vuelve a la pantalla 1 para seguir cargando el mismo artículo. */
 const STORAGE_KEY = "inv_local_v4";
 const QTY_FIELDS = ["cajasCerradas","piezasAbierta","piezasLinea","piezasScrap","piezasTerminado","piezasModuleCase"];
 const FIELD_LABELS = {
@@ -293,11 +305,12 @@ function renderList(){
   renderProgress();
 }
 
-/* ---------------- Detalle / carga puntual (cantidad -> unidad -> columna -> operador) ---------------- */
+/* ---------------- Asistente de 4 pantallas ---------------- */
 const overlay = document.getElementById("overlay");
 const sheet = document.getElementById("sheet");
 let currentPn = null;
 let builder = { cantidad: "", unidad: "CAJA", columna: null };
+let wizardStep = 1;
 
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -307,22 +320,134 @@ function openSheet(pnRaw){
   const pn = pnRaw.trim();
   if(!pn) return;
   currentPn = pn;
-  builder = { cantidad: "", unidad: "CAJA", columna: null };
-  renderSheet();
+  builder = { cantidad: "", unidad: builder.unidad || "CAJA", columna: null };
+  wizardStep = 1;
+  renderWizard();
   overlay.classList.add("open");
 }
 
-function renderSheet(){
+function goStep(n){
+  wizardStep = n;
+  renderWizard();
+}
+
+function closeSheet(){
+  overlay.classList.remove("open");
+  currentPn = null;
+}
+overlay.addEventListener("click", e => { if(e.target === overlay) closeSheet(); });
+
+function wizardHeaderHtml(stepLabel){
   const entry = findEntry(currentPn);
   const itemNo = entry ? entry.itemNo : state.nextItem;
+  return `
+    <div class="wizard-header">
+      <button class="wiz-nav ${wizardStep>1 ? '' : 'invisible'}" id="wizBack">←</button>
+      <div class="wizard-title">
+        ${!entry ? '<div class="new-badge">Nuevo</div>' : ''}
+        <div class="pn">${itemNo}. ${escapeHtml(currentPn)}</div>
+        <div class="step-label">${stepLabel}</div>
+      </div>
+      <button class="wiz-nav" id="wizClose">✕</button>
+    </div>
+  `;
+}
+
+function attachCommonNav(backStep){
+  document.getElementById("wizClose").addEventListener("click", closeSheet);
+  if(wizardStep > 1){
+    document.getElementById("wizBack").addEventListener("click", () => goStep(backStep));
+  }
+}
+
+function renderWizard(){
+  if(wizardStep === 1) renderStepCantidad();
+  else if(wizardStep === 2) renderStepUnidad();
+  else if(wizardStep === 3) renderStepColumna();
+  else renderStepConfirmar();
+}
+
+/* Paso 1: Cantidad */
+function renderStepCantidad(){
+  const entry = findEntry(currentPn);
   const desc = entry ? entry.desc : "";
   const spq = entry ? entry.spq : "";
+
+  sheet.innerHTML = wizardHeaderHtml("Paso 1 de 4 · Cantidad") + `
+    <div class="field-compact">
+      <input type="text" id="f_desc" value="${escapeHtml(desc||"")}" placeholder="Descripción (opcional)">
+    </div>
+    <div class="field-compact">
+      <input type="number" inputmode="numeric" min="0" id="f_spq" value="${spq ?? ""}" placeholder="SPQ (opcional)">
+    </div>
+    <div class="cantidad-display" id="cantidadDisplay">${builder.cantidad || "0"}</div>
+    <div class="numpad" id="numpad">
+      ${["1","2","3","4","5","6","7","8","9"].map(n=>`<button data-num="${n}">${n}</button>`).join("")}
+      <button class="clear" data-action="clear">C</button>
+      <button data-num="0">0</button>
+      <button class="back" data-action="back">⌫</button>
+    </div>
+    <button class="menu-btn primary wizard-next" id="nextBtn" ${Number(builder.cantidad)>0 ? "" : "disabled"}>Siguiente →</button>
+  `;
+
+  attachCommonNav(1);
+  document.getElementById("f_desc").addEventListener("input", onMetaChange);
+  document.getElementById("f_spq").addEventListener("input", onMetaChange);
+  document.getElementById("numpad").addEventListener("click", onNumpadClick);
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if(Number(builder.cantidad) > 0) goStep(2);
+  });
+}
+
+/* Paso 2: Unidad */
+function renderStepUnidad(){
+  sheet.innerHTML = wizardHeaderHtml("Paso 2 de 4 · Unidad") + `
+    <div class="wizard-question">Cantidad: ${builder.cantidad}</div>
+    <div class="big-choice-col">
+      <button class="big-choice ${builder.unidad==='CAJA'?'active':''}" data-unidad="CAJA">CAJA<span class="sub">se multiplica x SPQ</span></button>
+      <button class="big-choice ${builder.unidad==='UNIDADES'?'active':''}" data-unidad="UNIDADES">UNIDADES<span class="sub">cantidad directa</span></button>
+    </div>
+  `;
+  attachCommonNav(1);
+  document.querySelectorAll(".big-choice[data-unidad]").forEach(b => {
+    b.addEventListener("click", () => {
+      const val = b.dataset.unidad;
+      if(val === "CAJA"){
+        const entry = findEntry(currentPn);
+        const spq = entry ? Number(entry.spq)||0 : 0;
+        if(spq <= 0){ showToast("Cargá el SPQ para poder sumar en cajas (volvé a Cantidad)."); return; }
+      }
+      builder.unidad = val;
+      goStep(3);
+    });
+  });
+}
+
+/* Paso 3: Columna */
+function renderStepColumna(){
+  sheet.innerHTML = wizardHeaderHtml("Paso 3 de 4 · Columna") + `
+    <div class="wizard-question">${builder.cantidad} ${builder.unidad==='CAJA'?'caja(s)':'unidad(es)'} — ¿a qué columna corresponde?</div>
+    <div class="columna-grid" id="columnaGrid">
+      ${QTY_FIELDS.map(f => `<button class="columna-btn" data-col="${f}">${FIELD_LABELS[f]}</button>`).join("")}
+    </div>
+  `;
+  attachCommonNav(2);
+  document.getElementById("columnaGrid").addEventListener("click", (e) => {
+    const btn = e.target.closest(".columna-btn");
+    if(!btn) return;
+    builder.columna = btn.dataset.col;
+    goStep(4);
+  });
+}
+
+/* Paso 4: Confirmar (log + resumen) -> Sumar / Deshacer / Eliminar */
+function renderStepConfirmar(){
+  const entry = findEntry(currentPn);
+  const spqVal = entry ? Number(entry.spq)||0 : 0;
+  const cantidad = Number(builder.cantidad) || 0;
+  const piezasPreview = builder.unidad === "CAJA" ? cantidad * spqVal : cantidad;
   const totals = entry ? entry.totals : emptyTotals();
   const log = entry ? entry.log : [];
-
-  const columnaButtonsHtml = QTY_FIELDS.map(f => `
-    <button class="columna-btn ${builder.columna===f?'active':''}" data-col="${f}">${FIELD_LABELS[f]}</button>
-  `).join("");
 
   const logRowsHtml = log.length
     ? log.map((item, idx) => {
@@ -334,41 +459,11 @@ function renderSheet(){
       }).reverse().join("")
     : '<div class="log-empty">Sin cargas todavía para este artículo.</div>';
 
-  sheet.innerHTML = `
-    <div class="sheet-header">
-      <div>
-        ${!entry ? '<div class="new-badge">Artículo nuevo</div><br>' : ''}
-        <div class="pn">${itemNo}. ${escapeHtml(currentPn)}</div>
-      </div>
-      <button class="close" id="sheetClose">✕</button>
+  sheet.innerHTML = wizardHeaderHtml("Paso 4 de 4 · Confirmar") + `
+    <div class="preview-box">
+      Vas a sumar <b>+${builder.cantidad} ${builder.unidad==='CAJA'?'caja(s)':'unidad(es)'}</b> a <b>${FIELD_LABELS[builder.columna]}</b>
+      ${builder.unidad==='CAJA' ? ` = <b>${piezasPreview.toLocaleString("es-AR")} piezas</b>` : ''}
     </div>
-
-    <div class="field">
-      <label>Descripción (opcional)</label>
-      <input type="text" id="f_desc" value="${escapeHtml(desc||"")}" placeholder="Ej: FRAME S/A, RH">
-    </div>
-    <div class="field">
-      <label>SPQ (Q x Caja) — opcional</label>
-      <input type="number" inputmode="numeric" min="0" id="f_spq" value="${spq ?? ""}" placeholder="0">
-    </div>
-    <div class="divider"></div>
-
-    <div class="cantidad-display" id="cantidadDisplay">${builder.cantidad || "0"}</div>
-    <div class="numpad" id="numpad">
-      ${["1","2","3","4","5","6","7","8","9"].map(n=>`<button data-num="${n}">${n}</button>`).join("")}
-      <button class="clear" data-action="clear">C</button>
-      <button data-num="0">0</button>
-      <button class="back" data-action="back">⌫</button>
-    </div>
-
-    <div class="unidad-row">
-      <button class="unidad-btn ${builder.unidad==='CAJA'?'active':''}" data-unidad="CAJA">CAJA</button>
-      <button class="unidad-btn ${builder.unidad==='UNIDADES'?'active':''}" data-unidad="UNIDADES">UNIDADES</button>
-    </div>
-    <div class="hint" id="hintCaja" style="${builder.unidad==='CAJA'?'':'display:none'}"></div>
-
-    <div class="columna-label">Columna</div>
-    <div class="columna-grid" id="columnaGrid">${columnaButtonsHtml}</div>
 
     <div class="menu-row">
       <button class="menu-btn primary" id="sumarBtn"><span class="ic">✔</span>Sumar</button>
@@ -381,7 +476,6 @@ function renderSheet(){
       <div class="log-list">${logRowsHtml}</div>
     </div>
 
-    <div class="divider"></div>
     <div class="accum-box">
       ${QTY_FIELDS.map(f => `<div class="accum-row"><span>${FIELD_LABELS[f]}</span><b>${(totals[f]||0).toLocaleString("es-AR")}</b></div>`).join("")}
       <div class="accum-row total"><span>Total piezas</span><b>${sumTotals(totals).toLocaleString("es-AR")}</b></div>
@@ -390,40 +484,22 @@ function renderSheet(){
     ${entry ? '<button class="delete-link" id="deleteArticleBtn">Eliminar artículo completo</button>' : ''}
   `;
 
-  document.getElementById("sheetClose").addEventListener("click", closeSheet);
-  document.getElementById("f_desc").addEventListener("input", onMetaChange);
-  document.getElementById("f_spq").addEventListener("input", onMetaChange);
-  document.getElementById("numpad").addEventListener("click", onNumpadClick);
-  document.querySelectorAll(".unidad-btn").forEach(b => b.addEventListener("click", onUnidadClick));
-  document.getElementById("columnaGrid").addEventListener("click", onColumnaClick);
-  document.getElementById("sumarBtn").addEventListener("click", onSumar);
+  attachCommonNav(3);
+  document.getElementById("sumarBtn").addEventListener("click", onSumarFinal);
   document.getElementById("deshacerBtn").addEventListener("click", onDeshacer);
   document.getElementById("eliminarBtn").addEventListener("click", onEliminarUltima);
   document.querySelector(".log-list").addEventListener("click", onLogRowDelete);
   const delArticleBtn = document.getElementById("deleteArticleBtn");
   if(delArticleBtn) delArticleBtn.addEventListener("click", onDeleteArticle);
-
-  updateCajaHint();
 }
 
-function updateCajaHint(){
-  const hint = document.getElementById("hintCaja");
-  if(!hint) return;
-  const spqEl = document.getElementById("f_spq");
-  const spq = spqEl ? Number(spqEl.value)||0 : 0;
-  const cantidad = Number(builder.cantidad)||0;
-  hint.textContent = spq > 0
-    ? ("x SPQ " + spq + " = " + (cantidad*spq).toLocaleString("es-AR") + " piezas")
-    : "Cargá el SPQ para poder sumar en cajas";
-}
-
+/* ---------------- Handlers ---------------- */
 function onMetaChange(){
   const entry = ensureEntry(currentPn);
   entry.desc = document.getElementById("f_desc").value;
   entry.spq = document.getElementById("f_spq").value;
   saveState();
   renderList();
-  updateCajaHint();
 }
 
 function onNumpadClick(e){
@@ -438,34 +514,17 @@ function onNumpadClick(e){
     builder.cantidad = "";
   }
   document.getElementById("cantidadDisplay").textContent = builder.cantidad || "0";
-  updateCajaHint();
+  const nextBtn = document.getElementById("nextBtn");
+  if(nextBtn) nextBtn.disabled = !(Number(builder.cantidad) > 0);
 }
 
-function onUnidadClick(e){
-  builder.unidad = e.currentTarget.dataset.unidad;
-  document.querySelectorAll(".unidad-btn").forEach(b => b.classList.toggle("active", b.dataset.unidad === builder.unidad));
-  const hint = document.getElementById("hintCaja");
-  hint.style.display = builder.unidad === "CAJA" ? "" : "none";
-  updateCajaHint();
-}
-
-function onColumnaClick(e){
-  const btn = e.target.closest(".columna-btn");
-  if(!btn) return;
-  builder.columna = btn.dataset.col;
-  document.querySelectorAll(".columna-btn").forEach(b => b.classList.toggle("active", b.dataset.col === builder.columna));
-}
-
-function onSumar(){
+function onSumarFinal(){
   const cantidad = Number(builder.cantidad) || 0;
-  if(cantidad <= 0){ showToast("Ingresá una cantidad."); return; }
-  if(!builder.columna){ showToast("Elegí a qué columna corresponde."); return; }
-  const spqVal = Number(document.getElementById("f_spq").value) || 0;
-  if(builder.unidad === "CAJA" && spqVal <= 0){ showToast("Cargá el SPQ para poder sumar en cajas."); return; }
+  if(cantidad <= 0 || !builder.columna){ showToast("Faltan datos, volvé a empezar la carga."); goStep(1); return; }
 
   const entry = ensureEntry(currentPn);
-  entry.desc = document.getElementById("f_desc").value;
-  entry.spq = document.getElementById("f_spq").value;
+  const spqVal = Number(entry.spq) || 0;
+  if(builder.unidad === "CAJA" && spqVal <= 0){ showToast("Cargá el SPQ para poder sumar en cajas."); goStep(1); return; }
 
   const piezas = builder.unidad === "CAJA" ? cantidad * spqVal : cantidad;
   entry.log.push({ ts: Date.now(), columna: builder.columna, unidad: builder.unidad, cantidad, piezas });
@@ -477,7 +536,7 @@ function onSumar(){
   builder.cantidad = "";
   builder.columna = null;
   renderList();
-  renderSheet();
+  goStep(1); // vuelve al menú de inicio para seguir cargando el mismo artículo
 }
 
 function onDeshacer(){
@@ -487,7 +546,7 @@ function onDeshacer(){
   entry.totals[last.columna] = (Number(entry.totals[last.columna])||0) - last.piezas;
   saveState();
   renderList();
-  renderSheet();
+  renderWizard(); // se queda en el paso 4
   showToast("Deshecho: -" + last.piezas.toLocaleString("es-AR") + " piezas de " + FIELD_LABELS[last.columna]);
 }
 
@@ -501,7 +560,7 @@ function deleteLogEntry(idx){
   entry.totals[item.columna] = (Number(entry.totals[item.columna])||0) - item.piezas;
   saveState();
   renderList();
-  renderSheet();
+  renderWizard(); // se queda en el paso 4
   showToast("Carga eliminada.");
 }
 
@@ -526,12 +585,6 @@ function onDeleteArticle(){
     showToast("Artículo eliminado.");
   }
 }
-
-function closeSheet(){
-  overlay.classList.remove("open");
-  currentPn = null;
-}
-overlay.addEventListener("click", e => { if(e.target === overlay) closeSheet(); });
 
 /* ---------------- Búsqueda / lector físico (teclado) ---------------- */
 searchInput.addEventListener("input", () => {

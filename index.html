@@ -76,6 +76,10 @@
   .hint{font-size:11px;color:var(--accent);margin-top:4px;}
   .divider{height:1px;background:var(--border);margin:16px 0;}
 
+  .qty-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+  .qty-grid .field{margin-bottom:14px;}
+  .qty-grid .field label{min-height:30px;}
+
   .accum-box{background:var(--panel2);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
   .accum-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--text);}
   .accum-row span{color:var(--muted);}
@@ -269,14 +273,15 @@ function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
-function qtyFieldsHtml(suffix){
-  return QTY_FIELDS.map(f => `
+function qtyFieldsHtml(){
+  const cells = QTY_FIELDS.map(f => `
     <div class="field">
-      <label>${FIELD_LABELS[f]}${suffix}${f === "cajasCerradas" ? " (se multiplica x SPQ)" : ""}</label>
+      <label>${FIELD_LABELS[f]}${f === "cajasCerradas" ? " (x SPQ)" : ""}</label>
       <input type="number" inputmode="numeric" min="0" id="f_${f}" value="" placeholder="0">
       ${f === "cajasCerradas" ? '<div class="hint" id="hintCerradas"></div>' : ""}
     </div>
   `).join("");
+  return `<div class="qty-grid">${cells}</div>`;
 }
 
 function openSheet(pnRaw){
@@ -309,7 +314,7 @@ function openSheet(pnRaw){
         <input type="number" inputmode="numeric" min="0" id="f_spq" value="" placeholder="0">
       </div>
       <div class="divider"></div>
-      ${qtyFieldsHtml("")}
+      ${qtyFieldsHtml()}
       <div class="divider"></div>
       <div class="total-box">
         <span>Total piezas</span>
@@ -342,8 +347,8 @@ function openSheet(pnRaw){
         <input type="number" inputmode="numeric" min="0" id="f_spq" value="${entry.spq ?? ""}" placeholder="0">
       </div>
       <div class="divider"></div>
-      <div class="pass-label">Nueva pasada: cargá solo lo que estás contando ahora — se suma al resumen de abajo</div>
-      ${qtyFieldsHtml(" a sumar ahora")}
+      <div class="pass-label">Nueva pasada: se suma al resumen de abajo</div>
+      ${qtyFieldsHtml()}
       <div class="divider"></div>
       <div class="accum-box">
         ${QTY_FIELDS.map(f => `<div class="accum-row"><span>${FIELD_LABELS[f]}</span><b>${(entry.totals[f]||0).toLocaleString("es-AR")}</b></div>`).join("")}

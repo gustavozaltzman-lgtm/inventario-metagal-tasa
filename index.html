@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Inventario Físico — METAGAL / TASA</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#273449; --border:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --green:#22c55e;
+    --amber:#f59e0b; --red:#ef4444;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  #app{display:flex;flex-direction:column;min-height:100vh;}
+
+  header{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--border);
+    padding:10px 12px 12px;}
+  header h1{font-size:16px;margin:0 0 2px;font-weight:700;}
+  header .sub{font-size:12px;color:var(--muted);margin-bottom:10px;}
+  .progress-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .progress-bar{flex:1;height:8px;border-radius:4px;background:var(--panel2);overflow:hidden;}
+  .progress-fill{height:100%;background:var(--accent);transition:width .2s;}
+  .progress-txt{font-size:12px;color:var(--muted);white-space:nowrap;}
+
+  .search-row{display:flex;gap:8px;}
+  #searchInput{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel2);color:var(--text);font-size:15px;outline:none;}
+  #searchInput:focus{border-color:var(--accent);}
+  .icon-btn{width:44px;height:44px;flex:none;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel2);color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;}
+  .icon-btn:active{background:var(--border);}
+
+  main{flex:1;padding:10px 12px 90px;}
+  .list{display:flex;flex-direction:column;gap:8px;}
+  .item-card{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);
+    border-radius:12px;padding:10px 12px;}
+  .item-card .status-dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--muted);}
+  .item-card.counted .status-dot{background:var(--green);}
+  .item-card.partial .status-dot{background:var(--amber);}
+  .item-info{flex:1;min-width:0;}
+  .item-info .pn{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;}
+  .item-info .desc{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .item-info .meta{font-size:11px;color:var(--muted);margin-top:2px;}
+  .item-total{font-size:15px;font-weight:700;color:var(--accent);text-align:right;min-width:52px;}
+  .item-total .lbl{display:block;font-size:10px;font-weight:400;color:var(--muted);}
+  .empty-msg{text-align:center;color:var(--muted);padding:40px 10px;font-size:14px;}
+
+  footer{position:fixed;bottom:0;left:0;right:0;display:flex;gap:8px;padding:10px 12px;
+    background:var(--panel);border-top:1px solid var(--border);z-index:20;}
+  footer button{flex:1;padding:12px 8px;border-radius:10px;border:none;font-size:14px;font-weight:600;}
+  #exportBtn{background:var(--accent);color:#0f172a;}
+  #resetBtn{background:var(--panel2);color:var(--red);border:1px solid var(--border);}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-end;}
+  .overlay.open{display:flex;}
+  .sheet{background:var(--panel);width:100%;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;
+    padding:16px;animation:up .18s ease-out;}
+  @keyframes up{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+  .sheet-header .pn{font-size:18px;font-weight:800;}
+  .sheet-header .close{font-size:22px;color:var(--muted);background:none;border:none;padding:4px;}
+  .sheet .desc{color:var(--muted);font-size:13px;margin-bottom:2px;}
+  .sheet .meta-row{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap;}
+  .sheet .meta-row b{color:var(--text);}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;}
+  .field input[type=number]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel2);color:var(--text);font-size:18px;outline:none;}
+  .field input[type=number]:focus{border-color:var(--accent);}
+  .hint{font-size:11px;color:var(--accent);margin-top:4px;}
+  .divider{height:1px;background:var(--border);margin:16px 0;}
+  .total-box{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);
+    border-radius:10px;padding:12px 14px;margin-top:6px;}
+  .total-box .big{font-size:22px;font-weight:800;color:var(--accent);}
+  .save-hint{text-align:center;font-size:11px;color:var(--muted);margin-top:14px;}
+
+  /* scanner overlay */
+  #scanOverlay{position:fixed;inset:0;background:#000;z-index:60;display:none;flex-direction:column;}
+  #scanOverlay.open{display:flex;}
+  #scanOverlay .scan-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;
+    color:#fff;}
+  #scanOverlay .scan-header button{background:none;border:none;color:#fff;font-size:22px;}
+  #reader{flex:1;}
+  #scanStatus{color:#fff;text-align:center;padding:10px;font-size:13px;min-height:36px;}
+
+  .toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:#0f172a;border:1px solid var(--border);
+    color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <h1>Inventario Físico — METAGAL / TASA</h1>
+    <div class="sub" id="subHeader">Proveedor: METAGAL</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-txt" id="progressTxt">0/0</div>
+    </div>
+    <div class="search-row">
+      <input id="searchInput" type="text" inputmode="text" autocomplete="off"
+        placeholder="Escanear o buscar Part Number...">
+      <button class="icon-btn" id="cameraBtn" title="Escanear con cámara">📷</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="list" id="list"></div>
+    <div class="empty-msg" id="emptyMsg" style="display:none">Sin resultados.</div>
+  </main>
+
+  <footer>
+    <button id="resetBtn">Reiniciar conteo</button>
+    <button id="exportBtn">Exportar Excel</button>
+  </footer>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<div id="scanOverlay">
+  <div class="scan-header">
+    <span>Apuntá al código de barras</span>
+    <button id="closeScanBtn">✕</button>
+  </div>
+  <div id="reader"></div>
+  <div id="scanStatus">Buscando código...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- Catálogo (fuente: V-V Inventario físico METAGAL.xlsx) ---------------- */
+const CATALOG = [
+{item:1,pn:"2AD11-73810-00",desc:"FRAME S/A,RH",origen:"JP AM",criterio:"B/O 640X NOV",spq:40},
+{item:2,pn:"2AD12-73810-00",desc:"FRAME S/A,LH",origen:"JP AM",criterio:"B/O 640X NOV",spq:40},
+{item:3,pn:"2TG11-G0950-00",desc:"Heater BSM",origen:"TH",criterio:"B/O 640X NOV",spq:160},
+{item:4,pn:"2TG11-G4160-00",desc:"PANEL HPITER RH",origen:"TH",criterio:"B/O 640X NOV",spq:160},
+{item:5,pn:"2TG11-G6000-00",desc:"WELCOME LIGHT RH",origen:"TH",criterio:"B/O 640X NOV",spq:56},
+{item:6,pn:"2TG12-G0950-00",desc:"Heater BSM",origen:"TH",criterio:"B/O 640X NOV",spq:160},
+{item:7,pn:"2TG12-G4160-00",desc:"PANEL HPITER LH",origen:"TH",criterio:"B/O 640X NOV",spq:160},
+{item:8,pn:"2TG12-G6000-00",desc:"WELCOME LIGHT LH",origen:"TH",criterio:"B/O 640X NOV",spq:56},
+{item:9,pn:"2TG15-G3000-00",desc:"ACTUATOR S/A",origen:"JP AM",criterio:"B/O 640X NOV",spq:60},
+{item:10,pn:"2TH11-G5820-00",desc:"HARNESS T/O R/C RH",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:11,pn:"2TH11-G5880-00",desc:"HARNESS T/O R/C STSL RH",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:12,pn:"2TH11-G5950-00",desc:"HARNESS A/T R/C STSL RH",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:13,pn:"2TH11-G5970-00",desc:"HARNESS A/T R/C STSL RH HPITER",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:14,pn:"2TH11-G6000-00",desc:"HARNESS A/T R/C STSL RH W/L",origen:"TH",criterio:"B/O 640x OCT",spq:96},
+{item:15,pn:"2TH11-J7490-00",desc:"Harness RH Version: A/T, R/C, STSL, BSM",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:16,pn:"2TH11-J9770-00",desc:"HARNESS A/T R/C STSL H/T CAMARA RH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:17,pn:"2TH11-J9780-00",desc:"HARNESS A/T R/C STSL W/L BSM CAMARA RH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:18,pn:"2TH11-J9800-00",desc:"HARNESS A/T R/C STSL W/L CAMARA RH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:19,pn:"2TH11-K4970-00",desc:"HARNESS A/T R/C STSL H/T CAMARA RH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:20,pn:"2TH11-K4990-00",desc:"HARNESS A/T R/C STSL W/L CAMARA RH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:21,pn:"2TH12-G5820-00",desc:"HARNESS T/O R/C LH",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:22,pn:"2TH12-G5880-00",desc:"HARNESS T/O R/C STSL LH",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:23,pn:"2TH12-G5950-00",desc:"HARNESS A/T R/C STSL LH",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:24,pn:"2TH12-G5970-00",desc:"HARNESS A/T R/C STSL LH HPITER",origen:"TH",criterio:"B/O 640X NOV",spq:96},
+{item:25,pn:"2TH12-G6000-00",desc:"HARNESS A/T R/C STSL LH W/L",origen:"TH",criterio:"B/O 640x OCT",spq:96},
+{item:26,pn:"2TH12-J7490-00",desc:"Harness LH Version: A/T, R/C, STSL, BSM",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:27,pn:"2TH12-J9770-00",desc:"HARNESS A/T R/C STSL H/T CAMARA LH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:28,pn:"2TH12-J9780-00",desc:"HARNESS A/T R/C STSL W/L BSM CAMARA LH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:29,pn:"2TH12-J9800-00",desc:"HARNESS A/T R/C STSL W/L CAMARA LH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:30,pn:"2TH12-K4970-00",desc:"HARNESS A/T R/C STSL H/T CAMARA LH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:31,pn:"2TH12-K4990-00",desc:"HARNESS A/T R/C STSL W/L CAMARA LH",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:32,pn:"2TH21-H9800-00",desc:"BSM S/A RH",origen:"TH",criterio:"B/O 640X NOV",spq:120},
+{item:33,pn:"2TH22-H9800-00",desc:"BSM S/A LH",origen:"TH",criterio:"B/O 640X NOV",spq:120},
+{item:34,pn:"3B095-G6130-00",desc:"BASE MIRROR",origen:"TH",criterio:"B/O 640X NOV",spq:120},
+{item:35,pn:"3C215-8838C-00",desc:"PLATE PIVOT",origen:"TH",criterio:"B/O 640X NOV",spq:60},
+{item:36,pn:"3J015-A0660-00",desc:"CAP SUPPORT",origen:"TH",criterio:"B/O 640X NOV",spq:120},
+{item:37,pn:"81730-0K020-00",desc:"LAMP ASSY, SIDE TURN SIGNAL LH",origen:"TH",criterio:"B/O 640X NOV",spq:40},
+{item:38,pn:"81740-0K020-00",desc:"LAMP ASSY, SIDE TURN SIGNAL RH",origen:"TH",criterio:"B/O 640X NOV",spq:40},
+{item:39,pn:"86790-0K150-00",desc:"CAMARA S/A LH",origen:"TH",criterio:"B/O 640X NOV",spq:192},
+{item:40,pn:"86790-0K160-00",desc:"CAMARA S/A RH",origen:"TH",criterio:"B/O 640X NOV",spq:192},
+];
+
+const STORAGE_KEY = "inv_metagal_tasa_v1";
+const FIELDS = ["cajasCerradas","piezasAbierta","piezasLinea","piezasScrap","piezasTerminado"];
+
+function loadCounts(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveCounts(counts){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(counts));
+}
+let counts = loadCounts();
+
+function normPn(s){
+  return (s||"").toString().toUpperCase().replace(/[^A-Z0-9]/g,"");
+}
+const CATALOG_INDEX = {};
+CATALOG.forEach(c => CATALOG_INDEX[normPn(c.pn)] = c);
+
+function getEntry(pn){
+  return counts[pn] || {};
+}
+function pieceCerradas(entry, spq){
+  const cajas = Number(entry.cajasCerradas)||0;
+  return cajas * spq;
+}
+function totalPiezas(entry, spq){
+  const cerradas = pieceCerradas(entry, spq);
+  const abierta = Number(entry.piezasAbierta)||0;
+  const linea = Number(entry.piezasLinea)||0;
+  const scrap = Number(entry.piezasScrap)||0;
+  const term = Number(entry.piezasTerminado)||0;
+  return cerradas + abierta + linea + scrap + term;
+}
+function isCounted(entry){
+  return FIELDS.some(f => entry[f] !== undefined && entry[f] !== null && entry[f] !== "");
+}
+
+/* ---------------- Render lista ---------------- */
+const listEl = document.getElementById("list");
+const emptyMsg = document.getElementById("emptyMsg");
+const searchInput = document.getElementById("searchInput");
+let searchTerm = "";
+
+function filteredCatalog(){
+  if(!searchTerm) return CATALOG;
+  const t = searchTerm.toLowerCase();
+  const tNorm = normPn(searchTerm);
+  return CATALOG.filter(c =>
+    c.pn.toLowerCase().includes(t) ||
+    c.desc.toLowerCase().includes(t) ||
+    String(c.item) === t ||
+    (tNorm && normPn(c.pn).includes(tNorm))
+  );
+}
+
+function renderProgress(){
+  const total = CATALOG.length;
+  const done = CATALOG.filter(c => isCounted(getEntry(c.pn))).length;
+  document.getElementById("progressTxt").textContent = done + "/" + total;
+  document.getElementById("progressFill").style.width = (total? (done/total*100):0) + "%";
+}
+
+function renderList(){
+  const items = filteredCatalog();
+  listEl.innerHTML = "";
+  emptyMsg.style.display = items.length ? "none" : "block";
+  items.forEach(c => {
+    const entry = getEntry(c.pn);
+    const counted = isCounted(entry);
+    const total = totalPiezas(entry, c.spq);
+    const div = document.createElement("div");
+    div.className = "item-card" + (counted ? " counted" : "");
+    div.innerHTML = `
+      <div class="status-dot"></div>
+      <div class="item-info">
+        <div class="pn">${c.item}. ${c.pn}</div>
+        <div class="desc">${c.desc}</div>
+        <div class="meta">SPQ ${c.spq} · ${c.origen}</div>
+      </div>
+      <div class="item-total">${counted ? total.toLocaleString("es-AR") : "—"}<span class="lbl">piezas</span></div>
+    `;
+    div.addEventListener("click", () => openSheet(c.pn));
+    listEl.appendChild(div);
+  });
+  renderProgress();
+}
+
+/* ---------------- Detalle / carga ---------------- */
+const overlay = document.getElementById("overlay");
+const sheet = document.getElementById("sheet");
+let currentPn = null;
+
+function openSheet(pn){
+  const c = CATALOG_INDEX[normPn(pn)];
+  if(!c){ showToast("Part Number no encontrado en catálogo: " + pn); return; }
+  currentPn = c.pn;
+  const entry = getEntry(c.pn);
+  sheet.innerHTML = `
+    <div class="sheet-header">
+      <div>
+        <div class="pn">${c.item}. ${c.pn}</div>
+      </div>
+      <button class="close" id="sheetClose">✕</button>
+    </div>
+    <div class="desc">${c.desc}</div>
+    <div class="meta-row">
+      <span>Origen: <b>${c.origen}</b></span>
+      <span>Criterio: <b>${c.criterio}</b></span>
+      <span>SPQ: <b>${c.spq}</b></span>
+    </div>
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>Cajas cerradas en depósito (se multiplica x SPQ)</label>
+      <input type="number" inputmode="numeric" min="0" id="f_cajasCerradas" value="${entry.cajasCerradas ?? ""}" placeholder="0">
+      <div class="hint" id="hintCerradas"></div>
+    </div>
+    <div class="field">
+      <label>Cantidad de piezas en caja abierta en depósito</label>
+      <input type="number" inputmode="numeric" min="0" id="f_piezasAbierta" value="${entry.piezasAbierta ?? ""}" placeholder="0">
+    </div>
+    <div class="field">
+      <label>Cantidad de piezas en línea</label>
+      <input type="number" inputmode="numeric" min="0" id="f_piezasLinea" value="${entry.piezasLinea ?? ""}" placeholder="0">
+    </div>
+    <div class="field">
+      <label>Cantidad de piezas en scrap</label>
+      <input type="number" inputmode="numeric" min="0" id="f_piezasScrap" value="${entry.piezasScrap ?? ""}" placeholder="0">
+    </div>
+    <div class="field">
+      <label>Producto terminado</label>
+      <input type="number" inputmode="numeric" min="0" id="f_piezasTerminado" value="${entry.piezasTerminado ?? ""}" placeholder="0">
+    </div>
+
+    <div class="total-box">
+      <span>Total piezas</span>
+      <span class="big" id="totalBig">0</span>
+    </div>
+    <div class="save-hint">Se guarda automáticamente en este celular.</div>
+  `;
+  overlay.classList.add("open");
+  document.getElementById("sheetClose").addEventListener("click", closeSheet);
+
+  const ids = ["f_cajasCerradas","f_piezasAbierta","f_piezasLinea","f_piezasScrap","f_piezasTerminado"];
+  ids.forEach(id => document.getElementById(id).addEventListener("input", onFieldChange));
+  updateSheetTotals(c);
+}
+
+function onFieldChange(){
+  const c = CATALOG_INDEX[normPn(currentPn)];
+  const entry = getEntry(currentPn);
+  entry.cajasCerradas = document.getElementById("f_cajasCerradas").value;
+  entry.piezasAbierta = document.getElementById("f_piezasAbierta").value;
+  entry.piezasLinea = document.getElementById("f_piezasLinea").value;
+  entry.piezasScrap = document.getElementById("f_piezasScrap").value;
+  entry.piezasTerminado = document.getElementById("f_piezasTerminado").value;
+  counts[currentPn] = entry;
+  saveCounts(counts);
+  updateSheetTotals(c);
+  renderList();
+}
+
+function updateSheetTotals(c){
+  const entry = getEntry(currentPn);
+  const cerradasPiezas = pieceCerradas(entry, c.spq);
+  document.getElementById("hintCerradas").textContent =
+    (Number(entry.cajasCerradas)||0) > 0 ? ("= " + cerradasPiezas.toLocaleString("es-AR") + " piezas") : "";
+  document.getElementById("totalBig").textContent = totalPiezas(entry, c.spq).toLocaleString("es-AR");
+}
+
+function closeSheet(){
+  overlay.classList.remove("open");
+  currentPn = null;
+}
+overlay.addEventListener("click", e => { if(e.target === overlay) closeSheet(); });
+
+/* ---------------- Búsqueda / lector físico (teclado) ---------------- */
+searchInput.addEventListener("input", () => {
+  searchTerm = searchInput.value.trim();
+  renderList();
+});
+searchInput.addEventListener("keydown", (e) => {
+  if(e.key === "Enter"){
+    const val = searchInput.value.trim();
+    const c = CATALOG_INDEX[normPn(val)];
+    if(c){
+      openSheet(c.pn);
+      searchInput.value = "";
+      searchTerm = "";
+      renderList();
+    } else if(val){
+      showToast("Sin coincidencia exacta para: " + val);
+    }
+  }
+});
+
+/* ---------------- Escaneo por cámara ---------------- */
+const scanOverlay = document.getElementById("scanOverlay");
+const cameraBtn = document.getElementById("cameraBtn");
+const closeScanBtn = document.getElementById("closeScanBtn");
+const scanStatus = document.getElementById("scanStatus");
+let html5QrCode = null;
+let scanning = false;
+
+cameraBtn.addEventListener("click", startScan);
+closeScanBtn.addEventListener("click", stopScan);
+
+function startScan(){
+  if(typeof Html5Qrcode === "undefined"){
+    showToast("No se pudo cargar el módulo de cámara (sin conexión).");
+    return;
+  }
+  scanOverlay.classList.add("open");
+  scanStatus.textContent = "Iniciando cámara...";
+  html5QrCode = new Html5Qrcode("reader", {
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.CODE_93,
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.QR_CODE,
+      Html5QrcodeSupportedFormats.ITF,
+      Html5QrcodeSupportedFormats.DATA_MATRIX
+    ]
+  });
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 260, height: 140 } },
+    onScanSuccess,
+    () => {}
+  ).then(() => { scanning = true; scanStatus.textContent = "Buscando código..."; })
+   .catch(err => {
+      scanStatus.textContent = "No se pudo acceder a la cámara.";
+      showToast("Cámara no disponible: revisá permisos o usá HTTPS.");
+   });
+}
+
+function stopScan(){
+  scanOverlay.classList.remove("open");
+  if(html5QrCode && scanning){
+    html5QrCode.stop().then(() => html5QrCode.clear()).catch(()=>{});
+  }
+  scanning = false;
+}
+
+function onScanSuccess(decodedText){
+  const c = CATALOG_INDEX[normPn(decodedText)];
+  if(c){
+    stopScan();
+    openSheet(c.pn);
+  } else {
+    scanStatus.textContent = "Código no reconocido: " + decodedText;
+  }
+}
+
+/* ---------------- Export Excel ---------------- */
+document.getElementById("exportBtn").addEventListener("click", exportExcel);
+
+function exportExcel(){
+  const rows = [];
+  rows.push(["Inventario Físico - METAGAL / TASA"]);
+  rows.push(["Proveedor:", "METAGAL", "", "Exportado:", new Date().toLocaleString("es-AR")]);
+  rows.push([]);
+  rows.push([
+    "Item","Part Number (TASA 12 dig.)","Descripción","Origen","Criterio","SPQ (Q x Caja)",
+    "Cajas cerradas contadas","Piezas caja cerrada en depósito","Piezas caja abierta en depósito",
+    "Piezas en línea","Piezas en scrap","Producto terminado","Cantidad Total (piezas)","Estado"
+  ]);
+
+  let grand = 0;
+  CATALOG.forEach(c => {
+    const entry = getEntry(c.pn);
+    const cerradas = pieceCerradas(entry, c.spq);
+    const abierta = Number(entry.piezasAbierta)||0;
+    const linea = Number(entry.piezasLinea)||0;
+    const scrap = Number(entry.piezasScrap)||0;
+    const term = Number(entry.piezasTerminado)||0;
+    const total = cerradas+abierta+linea+scrap+term;
+    grand += total;
+    rows.push([
+      c.item, c.pn, c.desc, c.origen, c.criterio, c.spq,
+      Number(entry.cajasCerradas)||0, cerradas, abierta, linea, scrap, term, total,
+      isCounted(entry) ? "Contado" : "Pendiente"
+    ]);
+  });
+
+  rows.push([]);
+  rows.push(["", "", "", "", "", "", "", "", "", "", "", "TOTAL GENERAL", grand]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [
+    {wch:5},{wch:22},{wch:32},{wch:8},{wch:14},{wch:10},
+    {wch:12},{wch:14},{wch:14},{wch:10},{wch:10},{wch:12},{wch:14},{wch:10}
+  ];
+  ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:6} }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Inventario METAGAL");
+
+  const fname = "Inventario_Fisico_METAGAL_" + new Date().toISOString().slice(0,10) + ".xlsx";
+  XLSX.writeFile(wb, fname);
+  showToast("Excel exportado: " + fname);
+}
+
+/* ---------------- Reset ---------------- */
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if(confirm("¿Reiniciar todo el conteo? Se va a borrar lo cargado en este celular.")){
+    counts = {};
+    saveCounts(counts);
+    renderList();
+    showToast("Conteo reiniciado.");
+  }
+});
+
+/* ---------------- Toast ---------------- */
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+/* ---------------- Service worker (offline) ---------------- */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+
+renderList();
+</script>
+</body>
+</html>

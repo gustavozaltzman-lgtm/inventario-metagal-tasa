@@ -66,6 +66,7 @@
   .sheet-header .close{font-size:22px;color:var(--muted);background:none;border:none;padding:4px;}
   .new-badge{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);
     background:#e0f2fe;border-radius:6px;padding:2px 8px;margin-bottom:8px;}
+  .pass-info{font-size:12px;color:var(--muted);margin-bottom:10px;}
 
   .field{margin-bottom:12px;}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;}
@@ -74,11 +75,22 @@
   .field input:focus{border-color:var(--accent);}
   .hint{font-size:11px;color:var(--accent);margin-top:4px;}
   .divider{height:1px;background:var(--border);margin:16px 0;}
+
+  .accum-box{background:var(--panel2);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
+  .accum-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--text);}
+  .accum-row span{color:var(--muted);}
+  .accum-row.total{border-top:1px solid var(--border);margin-top:4px;padding-top:8px;}
+  .accum-row.total span,.accum-row.total b{color:var(--text);font-weight:800;}
+  .pass-label{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:10px;}
+
   .total-box{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);
     border-radius:10px;padding:12px 14px;margin-top:6px;}
   .total-box .big{font-size:22px;font-weight:800;color:var(--accent);}
-  .save-hint{text-align:center;font-size:11px;color:var(--muted);margin-top:14px;}
-  .delete-link{display:block;text-align:center;color:var(--red);font-size:13px;margin-top:16px;
+  .save-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);
+    color:#fff;font-size:15px;font-weight:700;margin-top:14px;}
+  .undo-link{display:block;text-align:center;color:var(--amber);font-size:13px;margin-top:10px;
+    background:none;border:none;padding:8px;width:100%;}
+  .delete-link{display:block;text-align:center;color:var(--red);font-size:13px;margin-top:4px;
     background:none;border:none;padding:8px;width:100%;}
 
   /* scanner overlay */
@@ -109,7 +121,7 @@
         placeholder="Escanear o escribir Part Number...">
       <button class="icon-btn" id="cameraBtn" title="Escanear con cámara">📷</button>
     </div>
-    <div class="search-hint">Enter para cargar. Si el código no existe todavía, se crea como artículo nuevo.</div>
+    <div class="search-hint">Si el artículo ya existe, te deja cargar otra pasada y se suma al acumulado.</div>
   </header>
 
   <main>
@@ -145,9 +157,22 @@
 
 <script>
 /* ---------------- Estado: arranca vacío, se carga a medida que se cuenta ---------------- */
-const STORAGE_KEY = "inv_local_v2";
+/* Cada artículo acumula "pasadas": cada vez que se vuelve a contar, lo que se carga
+   se SUMA a lo acumulado (no lo reemplaza). Ej: pasada 1 = 50 cajas, pasada 2 = 20 cajas
+   -> acumulado = 70 cajas. */
+const STORAGE_KEY = "inv_local_v3";
 const QTY_FIELDS = ["cajasCerradas","piezasAbierta","piezasLinea","piezasScrap","piezasTerminado"];
+const FIELD_LABELS = {
+  cajasCerradas: "Cajas cerradas en depósito",
+  piezasAbierta: "Piezas en caja abierta",
+  piezasLinea: "Piezas en línea",
+  piezasScrap: "Piezas en scrap",
+  piezasTerminado: "Producto terminado"
+};
 
+function emptyTotals(){
+  return {cajasCerradas:0, piezasAbierta:0, piezasLinea:0, piezasScrap:0, piezasTerminado:0};
+}
 function loadState(){
   try{
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -166,18 +191,15 @@ function normPn(s){
 function findEntry(pnRaw){
   return state.entries[normPn(pnRaw)] || null;
 }
-function pieceCerradas(e){
-  const cajas = Number(e.cajasCerradas)||0;
-  const spq = Number(e.spq)||0;
+function pieceCerradas(entry){
+  const cajas = Number(entry.totals.cajasCerradas)||0;
+  const spq = Number(entry.spq)||0;
   return cajas * spq;
 }
-function totalPiezas(e){
-  const cerradas = pieceCerradas(e);
-  const abierta = Number(e.piezasAbierta)||0;
-  const linea = Number(e.piezasLinea)||0;
-  const scrap = Number(e.piezasScrap)||0;
-  const term = Number(e.piezasTerminado)||0;
-  return cerradas + abierta + linea + scrap + term;
+function totalPiezas(entry){
+  const t = entry.totals;
+  return pieceCerradas(entry) + (Number(t.piezasAbierta)||0) + (Number(t.piezasLinea)||0) +
+    (Number(t.piezasScrap)||0) + (Number(t.piezasTerminado)||0);
 }
 function orderedEntries(){
   return Object.values(state.entries).sort((a,b) => a.itemNo - b.itemNo);
@@ -214,6 +236,7 @@ function renderList(){
   emptyMsg.style.display = noneAtAll ? "block" : "none";
   items.forEach(e => {
     const total = totalPiezas(e);
+    const passes = e.passes.length;
     const div = document.createElement("div");
     div.className = "item-card";
     div.innerHTML = `
@@ -221,7 +244,7 @@ function renderList(){
       <div class="item-info">
         <div class="pn">${e.itemNo}. ${e.pn}</div>
         <div class="desc">${e.desc ? e.desc : "(sin descripción)"}</div>
-        <div class="meta">${e.spq ? "SPQ " + e.spq : "SPQ no cargado"}</div>
+        <div class="meta">${e.spq ? "SPQ " + e.spq : "SPQ no cargado"} · ${passes} pasada${passes!==1?"s":""}</div>
       </div>
       <div class="item-total">${total.toLocaleString("es-AR")}<span class="lbl">piezas</span></div>
     `;
@@ -237,140 +260,183 @@ const sheet = document.getElementById("sheet");
 let currentPn = null;
 let isNewEntry = false;
 
+function escapeHtml(s){
+  return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function qtyFieldsHtml(suffix){
+  return QTY_FIELDS.map(f => `
+    <div class="field">
+      <label>${FIELD_LABELS[f]}${suffix}${f === "cajasCerradas" ? " (se multiplica x SPQ)" : ""}</label>
+      <input type="number" inputmode="numeric" min="0" id="f_${f}" value="" placeholder="0">
+      ${f === "cajasCerradas" ? '<div class="hint" id="hintCerradas"></div>' : ""}
+    </div>
+  `).join("");
+}
+
 function openSheet(pnRaw){
-  let e = findEntry(pnRaw);
-  isNewEntry = !e;
-  if(!e){
-    e = {
-      pn: pnRaw.trim(),
-      itemNo: state.nextItem,
-      desc: "",
-      spq: "",
-      cajasCerradas:"", piezasAbierta:"", piezasLinea:"", piezasScrap:"", piezasTerminado:""
-    };
-  }
-  currentPn = e.pn;
+  const pn = pnRaw.trim();
+  if(!pn) return;
+  const entry = findEntry(pn);
+  isNewEntry = !entry;
+  currentPn = pn;
 
-  sheet.innerHTML = `
-    <div class="sheet-header">
-      <div>
-        ${isNewEntry ? '<div class="new-badge">Artículo nuevo</div><br>' : ''}
-        <div class="pn">${e.itemNo}. ${e.pn}</div>
+  if(isNewEntry){
+    sheet.innerHTML = `
+      <div class="sheet-header">
+        <div>
+          <div class="new-badge">Artículo nuevo</div><br>
+          <div class="pn">${state.nextItem}. ${escapeHtml(pn)}</div>
+        </div>
+        <button class="close" id="sheetClose">✕</button>
       </div>
-      <button class="close" id="sheetClose">✕</button>
-    </div>
-    <div class="divider"></div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="f_desc" value="" placeholder="Ej: FRAME S/A, RH">
+      </div>
+      <div class="field">
+        <label>SPQ (Q x Caja) — opcional</label>
+        <input type="number" inputmode="numeric" min="0" id="f_spq" value="" placeholder="0">
+      </div>
+      <div class="divider"></div>
+      ${qtyFieldsHtml("")}
+      <div class="total-box">
+        <span>Total piezas</span>
+        <span class="big" id="totalBig">0</span>
+      </div>
+      <button class="save-btn" id="saveBtn">Crear artículo</button>
+    `;
+  } else {
+    sheet.innerHTML = `
+      <div class="sheet-header">
+        <div>
+          <div class="pn">${entry.itemNo}. ${escapeHtml(entry.pn)}</div>
+        </div>
+        <button class="close" id="sheetClose">✕</button>
+      </div>
+      <div class="pass-info">${entry.passes.length
+        ? "Contado en " + entry.passes.length + " pasada" + (entry.passes.length>1?"s":"") + " hasta ahora"
+        : "Todavía sin cantidades cargadas"}</div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="f_desc" value="${escapeHtml(entry.desc||"")}" placeholder="Ej: FRAME S/A, RH">
+      </div>
+      <div class="field">
+        <label>SPQ (Q x Caja) — opcional</label>
+        <input type="number" inputmode="numeric" min="0" id="f_spq" value="${entry.spq ?? ""}" placeholder="0">
+      </div>
+      <div class="divider"></div>
+      <div class="accum-box">
+        ${QTY_FIELDS.map(f => `<div class="accum-row"><span>${FIELD_LABELS[f]}</span><b>${(entry.totals[f]||0).toLocaleString("es-AR")}</b></div>`).join("")}
+        <div class="accum-row total"><span>Total piezas acumulado</span><b>${totalPiezas(entry).toLocaleString("es-AR")}</b></div>
+      </div>
+      <div class="pass-label">Nueva pasada: cargá solo lo que estás contando ahora — se suma a lo de arriba</div>
+      ${qtyFieldsHtml(" a sumar ahora")}
+      <div class="total-box">
+        <span>Total piezas si guardo ahora</span>
+        <span class="big" id="totalBig">${totalPiezas(entry).toLocaleString("es-AR")}</span>
+      </div>
+      <button class="save-btn" id="saveBtn">Sumar este conteo</button>
+      ${entry.passes.length ? '<button class="undo-link" id="undoBtn">Deshacer última pasada</button>' : ''}
+      <button class="delete-link" id="deleteBtn">Eliminar este artículo</button>
+    `;
+  }
 
-    <div class="field">
-      <label>Descripción (opcional)</label>
-      <input type="text" id="f_desc" value="${escapeHtml(e.desc||"")}" placeholder="Ej: FRAME S/A, RH">
-    </div>
-    <div class="field">
-      <label>SPQ (Q x Caja) — opcional</label>
-      <input type="number" inputmode="numeric" min="0" id="f_spq" value="${e.spq ?? ""}" placeholder="0">
-    </div>
-    <div class="divider"></div>
-
-    <div class="field">
-      <label>Cajas cerradas en depósito (se multiplica x SPQ)</label>
-      <input type="number" inputmode="numeric" min="0" id="f_cajasCerradas" value="${e.cajasCerradas ?? ""}" placeholder="0">
-      <div class="hint" id="hintCerradas"></div>
-    </div>
-    <div class="field">
-      <label>Cantidad de piezas en caja abierta en depósito</label>
-      <input type="number" inputmode="numeric" min="0" id="f_piezasAbierta" value="${e.piezasAbierta ?? ""}" placeholder="0">
-    </div>
-    <div class="field">
-      <label>Cantidad de piezas en línea</label>
-      <input type="number" inputmode="numeric" min="0" id="f_piezasLinea" value="${e.piezasLinea ?? ""}" placeholder="0">
-    </div>
-    <div class="field">
-      <label>Cantidad de piezas en scrap</label>
-      <input type="number" inputmode="numeric" min="0" id="f_piezasScrap" value="${e.piezasScrap ?? ""}" placeholder="0">
-    </div>
-    <div class="field">
-      <label>Producto terminado</label>
-      <input type="number" inputmode="numeric" min="0" id="f_piezasTerminado" value="${e.piezasTerminado ?? ""}" placeholder="0">
-    </div>
-
-    <div class="total-box">
-      <span>Total piezas</span>
-      <span class="big" id="totalBig">0</span>
-    </div>
-    <div class="save-hint">Se guarda automáticamente en este celular.</div>
-    ${!isNewEntry ? '<button class="delete-link" id="deleteBtn">Eliminar este artículo</button>' : ''}
-  `;
   overlay.classList.add("open");
   document.getElementById("sheetClose").addEventListener("click", closeSheet);
+  document.getElementById("saveBtn").addEventListener("click", onSave);
 
-  const ids = ["f_desc","f_spq","f_cajasCerradas","f_piezasAbierta","f_piezasLinea","f_piezasScrap","f_piezasTerminado"];
-  ids.forEach(id => document.getElementById(id).addEventListener("input", onFieldChange));
+  const ids = ["f_desc","f_spq", ...QTY_FIELDS.map(f => "f_"+f)];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener("input", updateSheetTotals);
+  });
   if(!isNewEntry){
     document.getElementById("deleteBtn").addEventListener("click", onDelete);
+    const undoBtn = document.getElementById("undoBtn");
+    if(undoBtn) undoBtn.addEventListener("click", onUndo);
   }
   updateSheetTotals();
   if(isNewEntry) document.getElementById("f_desc").focus();
 }
 
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
+function updateSheetTotals(){
+  const entry = findEntry(currentPn);
+  const base = entry ? entry.totals : emptyTotals();
+  const spqEl = document.getElementById("f_spq");
+  const spq = spqEl ? Number(spqEl.value)||0 : 0;
+  const merged = {};
+  QTY_FIELDS.forEach(f => {
+    const el = document.getElementById("f_"+f);
+    const typed = el ? Number(el.value)||0 : 0;
+    merged[f] = (Number(base[f])||0) + typed;
+  });
+  const cerradasPiezas = merged.cajasCerradas * spq;
+  const total = cerradasPiezas + merged.piezasAbierta + merged.piezasLinea + merged.piezasScrap + merged.piezasTerminado;
 
-function currentDraft(){
-  return {
-    pn: currentPn,
-    itemNo: (findEntry(currentPn)||{itemNo: state.nextItem}).itemNo,
-    desc: document.getElementById("f_desc").value,
-    spq: document.getElementById("f_spq").value,
-    cajasCerradas: document.getElementById("f_cajasCerradas").value,
-    piezasAbierta: document.getElementById("f_piezasAbierta").value,
-    piezasLinea: document.getElementById("f_piezasLinea").value,
-    piezasScrap: document.getElementById("f_piezasScrap").value,
-    piezasTerminado: document.getElementById("f_piezasTerminado").value,
-  };
-}
-
-function onFieldChange(){
-  const draft = currentDraft();
-  const key = normPn(currentPn);
-  const alreadyExists = !!state.entries[key];
-  state.entries[key] = draft;
-  if(!alreadyExists){
-    state.nextItem += 1;
-    isNewEntry = false;
-    document.getElementById("deleteBtn") || addDeleteButtonIfMissing();
+  const hint = document.getElementById("hintCerradas");
+  if(hint){
+    hint.textContent = (merged.cajasCerradas > 0 && spq > 0)
+      ? ("= " + cerradasPiezas.toLocaleString("es-AR") + " piezas acumuladas")
+      : "";
   }
-  saveState();
-  updateSheetTotals();
-  renderList();
+  const big = document.getElementById("totalBig");
+  if(big) big.textContent = total.toLocaleString("es-AR");
 }
 
-function addDeleteButtonIfMissing(){
-  if(document.getElementById("deleteBtn")) return;
-  const btn = document.createElement("button");
-  btn.className = "delete-link";
-  btn.id = "deleteBtn";
-  btn.textContent = "Eliminar este artículo";
-  btn.addEventListener("click", onDelete);
-  sheet.appendChild(btn);
+function onSave(){
+  const key = normPn(currentPn);
+  let entry = state.entries[key];
+  const isCreating = !entry;
+  if(!entry){
+    entry = { pn: currentPn, itemNo: state.nextItem, desc: "", spq: "", totals: emptyTotals(), passes: [] };
+  }
+  entry.desc = document.getElementById("f_desc").value.trim();
+  entry.spq = document.getElementById("f_spq").value;
+
+  const pass = { ts: Date.now() };
+  let hasQty = false;
+  QTY_FIELDS.forEach(f => {
+    const v = Number(document.getElementById("f_"+f).value) || 0;
+    pass[f] = v;
+    if(v !== 0) hasQty = true;
+    entry.totals[f] = (Number(entry.totals[f])||0) + v;
+  });
+  if(hasQty) entry.passes.push(pass);
+
+  state.entries[key] = entry;
+  if(isCreating) state.nextItem += 1;
+  saveState();
+  closeSheet();
+  renderList();
+
+  if(isCreating) showToast("Artículo creado.");
+  else if(hasQty) showToast("Conteo sumado (pasada " + entry.passes.length + "). Total: " + totalPiezas(entry).toLocaleString("es-AR") + " piezas.");
+  else showToast("Datos actualizados.");
+}
+
+function onUndo(){
+  const entry = findEntry(currentPn);
+  if(!entry || entry.passes.length === 0) return;
+  if(!confirm("¿Deshacer la última pasada cargada para este artículo?")) return;
+  const last = entry.passes.pop();
+  QTY_FIELDS.forEach(f => { entry.totals[f] = (Number(entry.totals[f])||0) - (Number(last[f])||0); });
+  saveState();
+  renderList();
+  openSheet(currentPn);
+  showToast("Última pasada deshecha.");
 }
 
 function onDelete(){
-  if(confirm("¿Eliminar " + currentPn + " del inventario?")){
+  if(confirm("¿Eliminar " + currentPn + " y todo lo contado para este artículo?")){
     delete state.entries[normPn(currentPn)];
     saveState();
     closeSheet();
     renderList();
     showToast("Artículo eliminado.");
   }
-}
-
-function updateSheetTotals(){
-  const draft = currentDraft();
-  const cerradasPiezas = pieceCerradas(draft);
-  document.getElementById("hintCerradas").textContent =
-    (Number(draft.cajasCerradas)||0) > 0 && Number(draft.spq)>0 ? ("= " + cerradasPiezas.toLocaleString("es-AR") + " piezas") : "";
-  document.getElementById("totalBig").textContent = totalPiezas(draft).toLocaleString("es-AR");
 }
 
 function closeSheet(){
@@ -466,32 +532,33 @@ function exportExcel(){
   rows.push([]);
   rows.push([
     "Item","Part Number","Descripción","SPQ (Q x Caja)",
-    "Cajas cerradas contadas","Piezas caja cerrada en depósito","Piezas caja abierta en depósito",
-    "Piezas en línea","Piezas en scrap","Producto terminado","Cantidad Total (piezas)"
+    "Cajas cerradas acumuladas","Piezas caja cerrada en depósito","Piezas caja abierta en depósito",
+    "Piezas en línea","Piezas en scrap","Producto terminado","Cantidad Total (piezas)","Pasadas contadas"
   ]);
 
   let grand = 0;
   items.forEach(e => {
+    const t = e.totals;
     const cerradas = pieceCerradas(e);
-    const abierta = Number(e.piezasAbierta)||0;
-    const linea = Number(e.piezasLinea)||0;
-    const scrap = Number(e.piezasScrap)||0;
-    const term = Number(e.piezasTerminado)||0;
+    const abierta = Number(t.piezasAbierta)||0;
+    const linea = Number(t.piezasLinea)||0;
+    const scrap = Number(t.piezasScrap)||0;
+    const term = Number(t.piezasTerminado)||0;
     const total = cerradas+abierta+linea+scrap+term;
     grand += total;
     rows.push([
       e.itemNo, e.pn, e.desc||"", Number(e.spq)||0,
-      Number(e.cajasCerradas)||0, cerradas, abierta, linea, scrap, term, total
+      Number(t.cajasCerradas)||0, cerradas, abierta, linea, scrap, term, total, e.passes.length
     ]);
   });
 
   rows.push([]);
-  rows.push(["", "", "", "", "", "", "", "", "", "TOTAL GENERAL", grand]);
+  rows.push(["", "", "", "", "", "", "", "", "", "TOTAL GENERAL", grand, ""]);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws["!cols"] = [
     {wch:5},{wch:22},{wch:32},{wch:10},
-    {wch:12},{wch:14},{wch:14},{wch:10},{wch:10},{wch:12},{wch:14}
+    {wch:12},{wch:14},{wch:14},{wch:10},{wch:10},{wch:12},{wch:14},{wch:10}
   ];
   ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:5} }];
 

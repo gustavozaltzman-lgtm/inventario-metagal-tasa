@@ -246,7 +246,7 @@ function saveState(){
 function handleStorageFull(){
   const proceed = confirm(
     "Se llenó la memoria local del celular para este inventario (límite de seguridad ~2MB).\n\n" +
-    "Para seguir cargando hay que descargar el Excel con todo lo que hay hasta ahora y vaciar la memoria.\n\n" +
+    "Para seguir cargando hay que descargar el Excel con todo lo que hay hasta ahora y vaciar las cantidades cargadas.\n\n" +
     "¿Descargar el Excel y vaciar ahora?"
   );
   if(!proceed){
@@ -254,10 +254,9 @@ function handleStorageFull(){
     return;
   }
   exportExcel();
-  state = { nextItem: 1, entries: {} };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  softResetCounts();
   renderList();
-  showToast("Excel descargado y memoria vaciada. Podés seguir cargando.");
+  showToast("Excel descargado y cantidades vaciadas. Los artículos siguen creados, podés seguir cargando.");
 }
 let state = loadState();
 
@@ -688,13 +687,34 @@ function onScanSuccess(decodedText){
 }
 
 /* ---------------- Export Excel ---------------- */
-document.getElementById("exportBtn").addEventListener("click", exportExcel);
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const exported = exportExcel();
+  if(!exported) return;
+  const clear = confirm(
+    "Excel exportado.\n\n" +
+    "¿Vaciar las cantidades cargadas para empezar a operar de nuevo?\n" +
+    "Los artículos ya creados se mantienen (con SPQ y descripción), pero en cero — así no se duplica nada en el próximo conteo."
+  );
+  if(clear){
+    softResetCounts();
+    renderList();
+    showToast("Cantidades vaciadas. Los artículos siguen creados, listos para un conteo nuevo.");
+  }
+});
+
+function softResetCounts(){
+  Object.values(state.entries).forEach(e => {
+    e.totals = emptyTotals();
+    e.log = [];
+  });
+  saveState();
+}
 
 function exportExcel(){
   const items = orderedEntries();
   if(items.length === 0){
     showToast("No hay artículos cargados todavía.");
-    return;
+    return false;
   }
   const rows = [];
   rows.push(["Inventario Físico - Carga Local"]);
@@ -733,9 +753,35 @@ function exportExcel(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
+  const logRows = [];
+  logRows.push(["Detalle de Cargas por Artículo"]);
+  logRows.push(["Exportado:", new Date().toLocaleString("es-AR")]);
+  logRows.push([]);
+  logRows.push(["Item","Part Number","Descripción","Fecha y hora","Columna","Unidad","Cantidad","Piezas"]);
+  items.forEach(e => {
+    if(e.log.length === 0){
+      logRows.push([e.itemNo, e.pn, e.desc||"", "", "(sin cargas)", "", "", ""]);
+    } else {
+      e.log.forEach(item => {
+        logRows.push([
+          e.itemNo, e.pn, e.desc||"",
+          new Date(item.ts).toLocaleString("es-AR"),
+          FIELD_LABELS[item.columna], item.unidad, item.cantidad, item.piezas
+        ]);
+      });
+    }
+  });
+  const wsLog = XLSX.utils.aoa_to_sheet(logRows);
+  wsLog["!cols"] = [
+    {wch:5},{wch:22},{wch:32},{wch:20},{wch:16},{wch:10},{wch:10},{wch:10}
+  ];
+  wsLog["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:4} }];
+  XLSX.utils.book_append_sheet(wb, wsLog, "Cargas");
+
   const fname = "Inventario_Fisico_" + timestampForFilename() + ".xlsx";
   XLSX.writeFile(wb, fname);
   showToast("Excel exportado: " + fname);
+  return true;
 }
 
 function timestampForFilename(){

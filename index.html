@@ -225,8 +225,39 @@ function loadState(){
   }catch(e){}
   return { nextItem: 1, entries: {} }; // entries keyed by normPn
 }
+/* Tope de seguridad muy por debajo del límite real del navegador (5-10MB), para avisar
+   con tiempo antes de que localStorage falle. Si se llega, se pide bajar el Excel y se
+   vacía la memoria para poder seguir cargando. */
+const STORAGE_CAP_CHARS = 2 * 1024 * 1024; // ~2MB
+
 function saveState(){
+  const json = JSON.stringify(state);
+  try{
+    localStorage.setItem(STORAGE_KEY, json);
+  }catch(err){
+    handleStorageFull();
+    return;
+  }
+  if(json.length > STORAGE_CAP_CHARS){
+    handleStorageFull();
+  }
+}
+
+function handleStorageFull(){
+  const proceed = confirm(
+    "Se llenó la memoria local del celular para este inventario (límite de seguridad ~2MB).\n\n" +
+    "Para seguir cargando hay que descargar el Excel con todo lo que hay hasta ahora y vaciar la memoria.\n\n" +
+    "¿Descargar el Excel y vaciar ahora?"
+  );
+  if(!proceed){
+    showToast("Memoria llena: no se puede seguir cargando sin exportar primero.");
+    return;
+  }
+  exportExcel();
+  state = { nextItem: 1, entries: {} };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  renderList();
+  showToast("Excel descargado y memoria vaciada. Podés seguir cargando.");
 }
 let state = loadState();
 
@@ -702,9 +733,16 @@ function exportExcel(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
-  const fname = "Inventario_Fisico_" + new Date().toISOString().slice(0,10) + ".xlsx";
+  const fname = "Inventario_Fisico_" + timestampForFilename() + ".xlsx";
   XLSX.writeFile(wb, fname);
   showToast("Excel exportado: " + fname);
+}
+
+function timestampForFilename(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
+    "_" + pad(d.getHours()) + "-" + pad(d.getMinutes()) + "-" + pad(d.getSeconds());
 }
 
 /* ---------------- Reset ---------------- */

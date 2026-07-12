@@ -54,6 +54,7 @@
   footer button{flex:1;padding:12px 8px;border-radius:10px;border:none;font-size:14px;font-weight:600;}
   #exportBtn{background:var(--accent);color:#fff;}
   #resetBtn{background:var(--panel2);color:var(--red);border:1px solid var(--border);}
+  #importBtn{background:var(--panel2);color:var(--text);border:1px solid var(--border);}
 
   /* modal / wizard */
   .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:none;align-items:flex-end;}
@@ -177,9 +178,11 @@
   </main>
 
   <footer>
-    <button id="resetBtn">Reiniciar todo</button>
-    <button id="exportBtn">Exportar Excel</button>
+    <button id="resetBtn">Reiniciar</button>
+    <button id="importBtn">Importar</button>
+    <button id="exportBtn">Exportar</button>
   </footer>
+  <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none">
 
 </div>
 
@@ -204,19 +207,22 @@
    columna de destino. Se arma en 4 pantallas (asistente) para no tener que hacer scroll:
    1) Cantidad  2) Unidad  3) Columna  4) Confirmar (log + resumen) -> Sumar/Deshacer/Eliminar.
    Al Sumar, se vuelve a la pantalla 1 para seguir cargando el mismo artículo. */
-const STORAGE_KEY = "inv_local_v4";
-const QTY_FIELDS = ["cajasCerradas","piezasAbierta","piezasLinea","piezasScrap","piezasTerminado","piezasModuleCase"];
+const STORAGE_KEY = "inv_local_v5";
+const QTY_FIELDS = ["cajasCerradas","piezasAbierta","piezasLinea","piezasScrap","piezasTerceros","piezasModuleCase","piezasTerminado"];
 const FIELD_LABELS = {
-  cajasCerradas: "CAJAS CERRADAS",
-  piezasAbierta: "CAJA ABIERTA",
-  piezasLinea: "LÍNEA",
+  cajasCerradas: "CAJA CERRADA EN DEPÓSITO",
+  piezasAbierta: "CAJA ABIERTA EN DEPÓSITO",
+  piezasLinea: "LÍNEA PRODUCCIÓN",
   piezasScrap: "SCRAP",
-  piezasTerminado: "PRODUCTO TERMINADO",
-  piezasModuleCase: "MODULE CASE"
+  piezasTerceros: "TERCEROS",
+  piezasModuleCase: "MODULE CASE",
+  piezasTerminado: "PRODUCTO TERMINADO"
 };
 
 function emptyTotals(){
-  return {cajasCerradas:0, piezasAbierta:0, piezasLinea:0, piezasScrap:0, piezasTerminado:0, piezasModuleCase:0};
+  const t = {};
+  QTY_FIELDS.forEach(f => t[f] = 0);
+  return t;
 }
 function loadState(){
   try{
@@ -508,7 +514,7 @@ function renderStepConfirmar(){
 
     <div class="accum-box">
       ${QTY_FIELDS.map(f => `<div class="accum-row"><span>${FIELD_LABELS[f]}</span><b>${(totals[f]||0).toLocaleString("es-AR")}</b></div>`).join("")}
-      <div class="accum-row total"><span>Total piezas</span><b>${sumTotals(totals).toLocaleString("es-AR")}</b></div>
+      <div class="accum-row total"><span>CANTIDAD TOTAL</span><b>${sumTotals(totals).toLocaleString("es-AR")}</b></div>
     </div>
 
     ${entry ? '<button class="delete-link" id="deleteArticleBtn">Eliminar artículo completo</button>' : ''}
@@ -716,16 +722,18 @@ function exportExcel(){
     showToast("No hay artículos cargados todavía.");
     return false;
   }
+  // Encabezados generados desde FIELD_LABELS: mismos títulos en el Excel y en la app.
+  const headerRow = [
+    "Item", "Part Number", "Descripción", "SPQ (Q x Caja)",
+    ...QTY_FIELDS.map(f => FIELD_LABELS[f]),
+    "CANTIDAD TOTAL", "Cargas registradas"
+  ];
+
   const rows = [];
   rows.push(["Inventario Físico - Carga Local"]);
   rows.push(["Exportado:", new Date().toLocaleString("es-AR")]);
   rows.push([]);
-  rows.push([
-    "Item","Part Number","Descripción","SPQ (Q x Caja)",
-    "Cajas cerradas (piezas)","Caja abierta (piezas)","Línea (piezas)",
-    "Scrap (piezas)","Producto terminado (piezas)","Module Case (piezas)",
-    "Cantidad Total (piezas)","Cargas registradas"
-  ]);
+  rows.push(headerRow);
 
   let grand = 0;
   items.forEach(e => {
@@ -734,19 +742,22 @@ function exportExcel(){
     grand += total;
     rows.push([
       e.itemNo, e.pn, e.desc||"", Number(e.spq)||0,
-      Number(t.cajasCerradas)||0, Number(t.piezasAbierta)||0, Number(t.piezasLinea)||0,
-      Number(t.piezasScrap)||0, Number(t.piezasTerminado)||0, Number(t.piezasModuleCase)||0,
+      ...QTY_FIELDS.map(f => Number(t[f])||0),
       total, e.log.length
     ]);
   });
 
   rows.push([]);
-  rows.push(["", "", "", "", "", "", "", "", "", "TOTAL GENERAL", grand, ""]);
+  const totalRow = new Array(headerRow.length).fill("");
+  totalRow[2] = "TOTAL GENERAL";
+  totalRow[4 + QTY_FIELDS.length] = grand;
+  rows.push(totalRow);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws["!cols"] = [
     {wch:5},{wch:22},{wch:32},{wch:10},
-    {wch:14},{wch:14},{wch:10},{wch:10},{wch:16},{wch:12},{wch:14},{wch:12}
+    ...QTY_FIELDS.map(() => ({wch:16})),
+    {wch:14},{wch:12}
   ];
   ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:5} }];
 
@@ -789,6 +800,90 @@ function timestampForFilename(){
   const pad = n => String(n).padStart(2, "0");
   return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
     "_" + pad(d.getHours()) + "-" + pad(d.getMinutes()) + "-" + pad(d.getSeconds());
+}
+
+/* ---------------- Importar Excel (planilla base del proveedor) ---------------- */
+/* Reinicia todo el inventario e importa Item / Part Number / Descripción del Excel,
+   con cantidad en cero. Busca la fila de encabezados en cualquier hoja del archivo
+   (sin depender de un número de fila/columna fijo, porque cada planilla puede variar). */
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", onImportFileChange);
+
+function normalizeHeader(s){
+  return (s || "").toString().toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function parseTemplateWorkbook(wb){
+  for(const sheetName of wb.SheetNames){
+    const ws = wb.Sheets[sheetName];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    for(let r = 0; r < Math.min(aoa.length, 40); r++){
+      const row = aoa[r] || [];
+      let pnCol = -1, descCol = -1;
+      row.forEach((cell, c) => {
+        const norm = normalizeHeader(cell);
+        if(pnCol === -1 && /part (number|mumber)/.test(norm)) pnCol = c;
+        if(descCol === -1 && /descripcion/.test(norm)) descCol = c;
+      });
+      if(pnCol !== -1 && descCol !== -1){
+        const results = [];
+        for(let dr = r + 1; dr < aoa.length; dr++){
+          const drow = aoa[dr] || [];
+          const pnVal = (drow[pnCol] || "").toString().trim();
+          if(!pnVal) break;
+          const descVal = (drow[descCol] || "").toString().trim();
+          results.push({ pn: pnVal, desc: descVal });
+        }
+        if(results.length > 0) return results;
+      }
+    }
+  }
+  return [];
+}
+
+async function onImportFileChange(e){
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+
+  let parsed;
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array" });
+    parsed = parseTemplateWorkbook(wb);
+  }catch(err){
+    alert("No se pudo leer el archivo. Verificá que sea un Excel válido (.xlsx).");
+    return;
+  }
+  if(!parsed || parsed.length === 0){
+    alert("No se pudo reconocer el formato del Excel. Verificá que tenga las columnas \"Part Number\" y \"Descripción\".");
+    return;
+  }
+
+  const proceed = confirm(
+    "Vas a importar \"" + file.name + "\" (" + parsed.length + " artículos).\n\n" +
+    "Esto va a BORRAR todo el inventario actual y cargar estos artículos con cantidad en cero.\n\n" +
+    "¿Continuar?"
+  );
+  if(!proceed) return;
+
+  state = { nextItem: 1, entries: {} };
+  parsed.forEach(row => {
+    const key = normPn(row.pn);
+    if(!key || state.entries[key]) return;
+    state.entries[key] = {
+      pn: row.pn, itemNo: state.nextItem, desc: row.desc || "", spq: "",
+      totals: emptyTotals(), log: []
+    };
+    state.nextItem += 1;
+  });
+  saveState();
+  renderList();
+  showToast("Se importaron " + Object.keys(state.entries).length + " artículos desde el Excel.");
 }
 
 /* ---------------- Reset ---------------- */

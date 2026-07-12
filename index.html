@@ -502,9 +502,8 @@ function renderStepConfirmar(){
     </div>
 
     <div class="menu-row">
+      <button class="menu-btn warn" id="deshacerBtn"><span class="ic">↩</span>Deshacer</button>
       <button class="menu-btn primary" id="sumarBtn"><span class="ic">✔</span>Sumar</button>
-      <button class="menu-btn warn" id="deshacerBtn" ${log.length?"":"disabled"}><span class="ic">↩</span>Deshacer</button>
-      <button class="menu-btn danger" id="eliminarBtn" ${log.length?"":"disabled"}><span class="ic">🗑</span>Eliminar</button>
     </div>
 
     <div class="log-box">
@@ -523,7 +522,6 @@ function renderStepConfirmar(){
   attachCommonNav(3);
   document.getElementById("sumarBtn").addEventListener("click", onSumarFinal);
   document.getElementById("deshacerBtn").addEventListener("click", onDeshacer);
-  document.getElementById("eliminarBtn").addEventListener("click", onEliminarUltima);
   document.querySelector(".log-list").addEventListener("click", onLogRowDelete);
   const delArticleBtn = document.getElementById("deleteArticleBtn");
   if(delArticleBtn) delArticleBtn.addEventListener("click", onDeleteArticle);
@@ -574,14 +572,11 @@ function onSumarFinal(){
 }
 
 function onDeshacer(){
-  const entry = findEntry(currentPn);
-  if(!entry || entry.log.length === 0) return;
-  const last = entry.log.pop();
-  entry.totals[last.columna] = (Number(entry.totals[last.columna])||0) - last.piezas;
-  saveState();
-  renderList();
-  renderWizard(); // se queda en el paso 4
-  showToast("Deshecho: -" + last.piezas.toLocaleString("es-AR") + " piezas de " + FIELD_LABELS[last.columna]);
+  // Deshace la carga que se está armando (todavía no guardada), no el historial ya sumado.
+  builder.cantidad = "";
+  builder.columna = null;
+  goStep(1);
+  showToast("Carga descartada.");
 }
 
 function deleteLogEntry(idx){
@@ -596,12 +591,6 @@ function deleteLogEntry(idx){
   renderList();
   renderWizard(); // se queda en el paso 4
   showToast("Carga eliminada.");
-}
-
-function onEliminarUltima(){
-  const entry = findEntry(currentPn);
-  if(!entry || entry.log.length === 0) return;
-  deleteLogEntry(entry.log.length - 1);
 }
 
 function onLogRowDelete(e){

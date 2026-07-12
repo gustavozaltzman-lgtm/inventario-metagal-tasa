@@ -909,7 +909,16 @@ function showToast(msg){
 /* ---------------- Service worker (offline / local) ---------------- */
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(()=>{});
+    navigator.serviceWorker.register("sw.js")
+      .then(reg => reg.update()) // fuerza a revisar version nueva ahora, sin esperar el chequeo automatico del navegador
+      .catch(()=>{});
+  });
+  // en cuanto un service worker nuevo toma control, recargar una sola vez para mostrar la version nueva
+  let swRefreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if(swRefreshing) return;
+    swRefreshing = true;
+    window.location.reload();
   });
 }
 

@@ -66,10 +66,8 @@
   .wizard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .wiz-nav{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);
     color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;flex:none;}
-  .wiz-nav.invisible{visibility:hidden;}
   .wizard-title{flex:1;text-align:center;}
   .wizard-title .pn{font-size:15px;font-weight:800;}
-  .wizard-title .step-label{font-size:11px;color:var(--muted);margin-top:2px;}
   .new-badge{display:inline-block;font-size:10px;font-weight:700;color:var(--accent);
     background:#e0f2fe;border-radius:6px;padding:1px 7px;margin-bottom:3px;}
 
@@ -78,9 +76,9 @@
     background:#fff;color:var(--text);font-size:14px;outline:none;}
   .field-compact input:focus{border-color:var(--accent);}
 
-  .wizard-question{text-align:center;font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;}
-
   .divider{height:1px;background:var(--border);margin:16px 0;}
+
+  .locked{opacity:.35;pointer-events:none;}
 
   .cantidad-display{font-size:40px;font-weight:800;text-align:center;padding:16px;background:var(--panel2);
     border-radius:10px;margin-bottom:12px;color:var(--accent);letter-spacing:1px;font-variant-numeric:tabular-nums;}
@@ -91,22 +89,18 @@
   .numpad button.clear{color:var(--red);}
   .numpad button.back{color:var(--amber);}
 
-  .big-choice-col{display:flex;flex-direction:column;gap:12px;}
-  .big-choice{padding:28px 10px;border-radius:14px;border:2px solid var(--border);background:#fff;
-    font-size:20px;font-weight:800;color:var(--text);display:flex;flex-direction:column;gap:4px;align-items:center;}
-  .big-choice .sub{font-size:12px;font-weight:400;color:var(--muted);}
-  .big-choice.active{border-color:var(--accent);background:#e0f2fe;color:var(--accent);}
+  .unidad-row{display:flex;gap:8px;margin:14px 0 0;}
+  .unidad-btn{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:#fff;
+    font-weight:700;font-size:14px;color:var(--text);}
+  .unidad-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 
+  .columna-label{font-size:12px;color:var(--text);font-weight:700;margin:14px 0 8px;}
   .columna-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .columna-btn{padding:24px 8px;border-radius:12px;border:2px solid var(--border);background:#fff;
+  .columna-btn{padding:20px 8px;border-radius:12px;border:2px solid var(--border);background:#fff;
     font-weight:700;font-size:14px;color:var(--text);text-align:center;}
   .columna-btn.active{background:#e0f2fe;border-color:var(--accent);color:var(--accent);}
 
-  .preview-box{background:var(--panel2);border-radius:10px;padding:14px;text-align:center;font-size:14px;
-    margin-bottom:14px;}
-  .preview-box b{color:var(--accent);}
-
-  .menu-row{display:flex;gap:8px;margin-bottom:16px;}
+  .menu-row{display:flex;gap:8px;margin:16px 0;}
   .menu-btn{flex:1;padding:12px 6px;border-radius:10px;font-size:13px;font-weight:700;
     border:1px solid var(--border);background:var(--panel2);color:var(--text);text-align:center;
     display:flex;flex-direction:column;align-items:center;gap:2px;}
@@ -116,8 +110,6 @@
   .menu-btn.danger{color:var(--red);border-color:#fecaca;background:#fef2f2;}
   .menu-btn:active{filter:brightness(0.95);}
   .menu-btn:disabled{opacity:.4;}
-
-  .wizard-next{width:100%;margin-top:18px;}
 
   .log-box{margin-bottom:14px;}
   .log-box .log-title{font-size:11px;color:var(--muted);margin-bottom:6px;}
@@ -165,7 +157,7 @@
         placeholder="Escanear o escribir Part Number...">
       <button class="icon-btn" id="cameraBtn" title="Escanear con cámara">📷</button>
     </div>
-    <div class="search-hint">Cantidad → Unidad → Columna → Confirmar. Se acumula por artículo.</div>
+    <div class="search-hint">Primero SPQ (una vez), después cantidad + unidad + columna, todo en la misma pantalla.</div>
   </header>
 
   <main>
@@ -341,12 +333,13 @@ function renderList(){
   renderProgress();
 }
 
-/* ---------------- Asistente de 4 pantallas ---------------- */
+/* ---------------- Ficha de carga: una sola pantalla ---------------- */
+/* Primero pide SPQ (obligatorio, una sola vez por artículo). Con SPQ cargado, se
+   desbloquean cantidad (numpad) + unidad + columna, todo junto, sin cambiar de pantalla. */
 const overlay = document.getElementById("overlay");
 const sheet = document.getElementById("sheet");
 let currentPn = null;
 let builder = { cantidad: "", unidad: "CAJA", columna: null };
-let wizardStep = 1;
 
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -357,14 +350,8 @@ function openSheet(pnRaw){
   if(!pn) return;
   currentPn = pn;
   builder = { cantidad: "", unidad: builder.unidad || "CAJA", columna: null };
-  wizardStep = 1;
-  renderWizard();
+  renderSheet();
   overlay.classList.add("open");
-}
-
-function goStep(n){
-  wizardStep = n;
-  renderWizard();
 }
 
 function closeSheet(){
@@ -373,117 +360,18 @@ function closeSheet(){
 }
 overlay.addEventListener("click", e => { if(e.target === overlay) closeSheet(); });
 
-function wizardHeaderHtml(stepLabel){
+function renderSheet(){
   const entry = findEntry(currentPn);
   const itemNo = entry ? entry.itemNo : state.nextItem;
-  return `
-    <div class="wizard-header">
-      <button class="wiz-nav ${wizardStep>1 ? '' : 'invisible'}" id="wizBack">←</button>
-      <div class="wizard-title">
-        ${!entry ? '<div class="new-badge">Nuevo</div>' : ''}
-        <div class="pn">${itemNo}. ${escapeHtml(currentPn)}</div>
-        <div class="step-label">${stepLabel}</div>
-      </div>
-      <button class="wiz-nav" id="wizClose">✕</button>
-    </div>
-  `;
-}
-
-function attachCommonNav(backStep){
-  document.getElementById("wizClose").addEventListener("click", closeSheet);
-  if(wizardStep > 1){
-    document.getElementById("wizBack").addEventListener("click", () => goStep(backStep));
-  }
-}
-
-function renderWizard(){
-  if(wizardStep === 1) renderStepCantidad();
-  else if(wizardStep === 2) renderStepUnidad();
-  else if(wizardStep === 3) renderStepColumna();
-  else renderStepConfirmar();
-}
-
-/* Paso 1: Cantidad */
-function renderStepCantidad(){
-  const entry = findEntry(currentPn);
   const desc = entry ? entry.desc : "";
   const spq = entry ? entry.spq : "";
-
-  sheet.innerHTML = wizardHeaderHtml("Paso 1 de 4 · Cantidad") + `
-    <div class="field-compact">
-      <input type="text" id="f_desc" value="${escapeHtml(desc||"")}" placeholder="Descripción (opcional)">
-    </div>
-    <div class="field-compact">
-      <input type="number" inputmode="numeric" min="0" id="f_spq" value="${spq ?? ""}" placeholder="SPQ (opcional)">
-    </div>
-    <div class="cantidad-display" id="cantidadDisplay">${builder.cantidad || "0"}</div>
-    <div class="numpad" id="numpad">
-      ${["1","2","3","4","5","6","7","8","9"].map(n=>`<button data-num="${n}">${n}</button>`).join("")}
-      <button class="clear" data-action="clear">C</button>
-      <button data-num="0">0</button>
-      <button class="back" data-action="back">⌫</button>
-    </div>
-    <button class="menu-btn primary wizard-next" id="nextBtn" ${Number(builder.cantidad)>0 ? "" : "disabled"}>Siguiente →</button>
-  `;
-
-  attachCommonNav(1);
-  document.getElementById("f_desc").addEventListener("input", onMetaChange);
-  document.getElementById("f_spq").addEventListener("input", onMetaChange);
-  document.getElementById("numpad").addEventListener("click", onNumpadClick);
-  document.getElementById("nextBtn").addEventListener("click", () => {
-    if(Number(builder.cantidad) > 0) goStep(2);
-  });
-}
-
-/* Paso 2: Unidad */
-function renderStepUnidad(){
-  sheet.innerHTML = wizardHeaderHtml("Paso 2 de 4 · Unidad") + `
-    <div class="wizard-question">Cantidad: ${builder.cantidad}</div>
-    <div class="big-choice-col">
-      <button class="big-choice ${builder.unidad==='CAJA'?'active':''}" data-unidad="CAJA">CAJA<span class="sub">se multiplica x SPQ</span></button>
-      <button class="big-choice ${builder.unidad==='UNIDADES'?'active':''}" data-unidad="UNIDADES">UNIDADES<span class="sub">cantidad directa</span></button>
-    </div>
-  `;
-  attachCommonNav(1);
-  document.querySelectorAll(".big-choice[data-unidad]").forEach(b => {
-    b.addEventListener("click", () => {
-      const val = b.dataset.unidad;
-      if(val === "CAJA"){
-        const entry = findEntry(currentPn);
-        const spq = entry ? Number(entry.spq)||0 : 0;
-        if(spq <= 0){ showToast("Cargá el SPQ para poder sumar en cajas (volvé a Cantidad)."); return; }
-      }
-      builder.unidad = val;
-      goStep(3);
-    });
-  });
-}
-
-/* Paso 3: Columna */
-function renderStepColumna(){
-  sheet.innerHTML = wizardHeaderHtml("Paso 3 de 4 · Columna") + `
-    <div class="wizard-question">${builder.cantidad} ${builder.unidad==='CAJA'?'caja(s)':'unidad(es)'} — ¿a qué columna corresponde?</div>
-    <div class="columna-grid" id="columnaGrid">
-      ${QTY_FIELDS.map(f => `<button class="columna-btn" data-col="${f}">${FIELD_LABELS[f]}</button>`).join("")}
-    </div>
-  `;
-  attachCommonNav(2);
-  document.getElementById("columnaGrid").addEventListener("click", (e) => {
-    const btn = e.target.closest(".columna-btn");
-    if(!btn) return;
-    builder.columna = btn.dataset.col;
-    goStep(4);
-  });
-}
-
-/* Paso 4: Confirmar (log + resumen) -> Sumar / Deshacer / Eliminar */
-function renderStepConfirmar(){
-  const entry = findEntry(currentPn);
-  const spqVal = entry ? Number(entry.spq)||0 : 0;
-  const cantidad = Number(builder.cantidad) || 0;
-  const piezasPreview = builder.unidad === "CAJA" ? cantidad * spqVal : cantidad;
   const totals = entry ? entry.totals : emptyTotals();
   const log = entry ? entry.log : [];
+  const hasSpq = Number(spq) > 0;
+
+  const columnaButtonsHtml = QTY_FIELDS.map(f => `
+    <button class="columna-btn ${builder.columna===f?'active':''}" data-col="${f}">${FIELD_LABELS[f]}</button>
+  `).join("");
 
   const logRowsHtml = log.length
     ? log.map((item, idx) => {
@@ -495,15 +383,48 @@ function renderStepConfirmar(){
       }).reverse().join("")
     : '<div class="log-empty">Sin cargas todavía para este artículo.</div>';
 
-  sheet.innerHTML = wizardHeaderHtml("Paso 4 de 4 · Confirmar") + `
-    <div class="preview-box">
-      Vas a sumar <b>+${builder.cantidad} ${builder.unidad==='CAJA'?'caja(s)':'unidad(es)'}</b> a <b>${FIELD_LABELS[builder.columna]}</b>
-      ${builder.unidad==='CAJA' ? ` = <b>${piezasPreview.toLocaleString("es-AR")} piezas</b>` : ''}
+  sheet.innerHTML = `
+    <div class="wizard-header">
+      <div class="wizard-title">
+        ${!entry ? '<div class="new-badge">Nuevo</div>' : ''}
+        <div class="pn">${itemNo}. ${escapeHtml(currentPn)}</div>
+      </div>
+      <button class="wiz-nav" id="sheetClose">✕</button>
     </div>
 
-    <div class="menu-row">
-      <button class="menu-btn warn" id="deshacerBtn"><span class="ic">↩</span>Deshacer</button>
-      <button class="menu-btn primary" id="sumarBtn"><span class="ic">✔</span>Sumar</button>
+    <div class="field-compact">
+      <input type="text" id="f_desc" value="${escapeHtml(desc||"")}" placeholder="Descripción (opcional)">
+    </div>
+    <div class="field-compact">
+      <input type="number" inputmode="numeric" min="0" id="f_spq" value="${spq ?? ""}"
+        placeholder="SPQ (Q x Caja) — obligatorio" ${hasSpq ? "" : "autofocus"}>
+    </div>
+    <div class="hint" id="spqLockedMsg" style="${hasSpq ? "display:none" : ""}">Cargá el SPQ para poder empezar a sumar.</div>
+
+    <div class="divider"></div>
+
+    <div id="entrySection" class="${hasSpq ? "" : "locked"}">
+      <div class="cantidad-display" id="cantidadDisplay">${builder.cantidad || "0"}</div>
+      <div class="numpad" id="numpad">
+        ${["1","2","3","4","5","6","7","8","9"].map(n=>`<button data-num="${n}">${n}</button>`).join("")}
+        <button class="clear" data-action="clear">C</button>
+        <button data-num="0">0</button>
+        <button class="back" data-action="back">⌫</button>
+      </div>
+
+      <div class="unidad-row">
+        <button class="unidad-btn ${builder.unidad==='CAJA'?'active':''}" data-unidad="CAJA">CAJA</button>
+        <button class="unidad-btn ${builder.unidad==='UNIDADES'?'active':''}" data-unidad="UNIDADES">UNIDADES</button>
+      </div>
+      <div class="hint" id="hintCaja" style="${builder.unidad==='CAJA'?'':'display:none'}"></div>
+
+      <div class="columna-label">Columna</div>
+      <div class="columna-grid" id="columnaGrid">${columnaButtonsHtml}</div>
+
+      <div class="menu-row">
+        <button class="menu-btn warn" id="deshacerBtn"><span class="ic">↩</span>Deshacer</button>
+        <button class="menu-btn primary" id="sumarBtn"><span class="ic">✔</span>Sumar</button>
+      </div>
     </div>
 
     <div class="log-box">
@@ -519,21 +440,57 @@ function renderStepConfirmar(){
     ${entry ? '<button class="delete-link" id="deleteArticleBtn">Eliminar artículo completo</button>' : ''}
   `;
 
-  attachCommonNav(3);
-  document.getElementById("sumarBtn").addEventListener("click", onSumarFinal);
+  document.getElementById("sheetClose").addEventListener("click", closeSheet);
+  document.getElementById("f_desc").addEventListener("input", onMetaChange);
+  document.getElementById("f_spq").addEventListener("input", onSpqChange);
+  document.getElementById("numpad").addEventListener("click", onNumpadClick);
+  document.querySelectorAll(".unidad-btn").forEach(b => b.addEventListener("click", onUnidadClick));
+  document.getElementById("columnaGrid").addEventListener("click", onColumnaClick);
+  document.getElementById("sumarBtn").addEventListener("click", onSumar);
   document.getElementById("deshacerBtn").addEventListener("click", onDeshacer);
   document.querySelector(".log-list").addEventListener("click", onLogRowDelete);
   const delArticleBtn = document.getElementById("deleteArticleBtn");
   if(delArticleBtn) delArticleBtn.addEventListener("click", onDeleteArticle);
+
+  updateCajaHint();
 }
 
 /* ---------------- Handlers ---------------- */
+function updateCajaHint(){
+  const hint = document.getElementById("hintCaja");
+  if(!hint) return;
+  const spqEl = document.getElementById("f_spq");
+  const spq = spqEl ? Number(spqEl.value)||0 : 0;
+  const cantidad = Number(builder.cantidad)||0;
+  hint.textContent = spq > 0
+    ? ("x SPQ " + spq + " = " + (cantidad*spq).toLocaleString("es-AR") + " piezas")
+    : "";
+}
+
+function updateLockState(){
+  const spqEl = document.getElementById("f_spq");
+  const spq = spqEl ? Number(spqEl.value)||0 : 0;
+  const locked = spq <= 0;
+  const section = document.getElementById("entrySection");
+  if(section) section.classList.toggle("locked", locked);
+  const msg = document.getElementById("spqLockedMsg");
+  if(msg) msg.style.display = locked ? "" : "none";
+}
+
 function onMetaChange(){
   const entry = ensureEntry(currentPn);
   entry.desc = document.getElementById("f_desc").value;
+  saveState();
+  renderList();
+}
+
+function onSpqChange(){
+  const entry = ensureEntry(currentPn);
   entry.spq = document.getElementById("f_spq").value;
   saveState();
   renderList();
+  updateLockState();
+  updateCajaHint();
 }
 
 function onNumpadClick(e){
@@ -548,17 +505,32 @@ function onNumpadClick(e){
     builder.cantidad = "";
   }
   document.getElementById("cantidadDisplay").textContent = builder.cantidad || "0";
-  const nextBtn = document.getElementById("nextBtn");
-  if(nextBtn) nextBtn.disabled = !(Number(builder.cantidad) > 0);
+  updateCajaHint();
 }
 
-function onSumarFinal(){
+function onUnidadClick(e){
+  builder.unidad = e.currentTarget.dataset.unidad;
+  document.querySelectorAll(".unidad-btn").forEach(b => b.classList.toggle("active", b.dataset.unidad === builder.unidad));
+  const hint = document.getElementById("hintCaja");
+  hint.style.display = builder.unidad === "CAJA" ? "" : "none";
+  updateCajaHint();
+}
+
+function onColumnaClick(e){
+  const btn = e.target.closest(".columna-btn");
+  if(!btn) return;
+  builder.columna = btn.dataset.col;
+  document.querySelectorAll(".columna-btn").forEach(b => b.classList.toggle("active", b.dataset.col === builder.columna));
+}
+
+function onSumar(){
   const cantidad = Number(builder.cantidad) || 0;
-  if(cantidad <= 0 || !builder.columna){ showToast("Faltan datos, volvé a empezar la carga."); goStep(1); return; }
+  if(cantidad <= 0){ showToast("Ingresá una cantidad."); return; }
+  if(!builder.columna){ showToast("Elegí a qué columna corresponde."); return; }
 
   const entry = ensureEntry(currentPn);
   const spqVal = Number(entry.spq) || 0;
-  if(builder.unidad === "CAJA" && spqVal <= 0){ showToast("Cargá el SPQ para poder sumar en cajas."); goStep(1); return; }
+  if(spqVal <= 0){ showToast("Cargá el SPQ para poder sumar."); return; }
 
   const piezas = builder.unidad === "CAJA" ? cantidad * spqVal : cantidad;
   entry.log.push({ ts: Date.now(), columna: builder.columna, unidad: builder.unidad, cantidad, piezas });
@@ -572,10 +544,13 @@ function onSumarFinal(){
 }
 
 function onDeshacer(){
-  // Deshace la carga que se está armando (todavía no guardada), no el historial ya sumado.
+  // Descarta la carga que se está armando (todavía no guardada), no el historial ya sumado.
   builder.cantidad = "";
   builder.columna = null;
-  goStep(1);
+  const display = document.getElementById("cantidadDisplay");
+  if(display) display.textContent = "0";
+  document.querySelectorAll(".columna-btn").forEach(b => b.classList.remove("active"));
+  updateCajaHint();
   showToast("Carga descartada.");
 }
 
@@ -589,7 +564,7 @@ function deleteLogEntry(idx){
   entry.totals[item.columna] = (Number(entry.totals[item.columna])||0) - item.piezas;
   saveState();
   renderList();
-  renderWizard(); // se queda en el paso 4
+  renderSheet(); // se queda en la misma ficha
   showToast("Carga eliminada.");
 }
 

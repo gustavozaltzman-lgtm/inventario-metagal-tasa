@@ -221,7 +221,7 @@ function loadState(){
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if(s && s.entries) return s;
   }catch(e){}
-  return { nextItem: 1, entries: {} }; // entries keyed by normPn
+  return { nextItem: 1, entries: {}, importedPns: [] }; // entries keyed by normPn
 }
 /* Tope de seguridad muy por debajo del límite real del navegador (5-10MB), para avisar
    con tiempo antes de que localStorage falle. Si se llega, se pide bajar el Excel y se
@@ -345,6 +345,27 @@ function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
+function isKnownPn(pnRaw){
+  const key = normPn(pnRaw);
+  if(state.entries[key]) return true;
+  if(!state.importedPns || state.importedPns.length === 0) return true; // sin base cargada, no se restringe
+  return state.importedPns.includes(key);
+}
+
+function openSheetChecked(pnRaw){
+  const pn = (pnRaw||"").trim();
+  if(!pn) return;
+  if(!isKnownPn(pn)){
+    const add = confirm(
+      "El código \"" + pn + "\" no está en la base cargada.\n\n" +
+      "Puede ser un error de lectura del código de barras.\n\n" +
+      "¿Agregarlo de todos modos como artículo nuevo?"
+    );
+    if(!add) return;
+  }
+  openSheet(pn);
+}
+
 function openSheet(pnRaw){
   const pn = pnRaw.trim();
   if(!pn) return;
@@ -427,6 +448,10 @@ function renderSheet(){
       </div>
     </div>
 
+    <div class="menu-row">
+      <button class="menu-btn" id="otroArticuloBtn"><span class="ic">➜</span>Otro artículo</button>
+    </div>
+
     <div class="log-box">
       <div class="log-title">Cargas de este artículo</div>
       <div class="log-list">${logRowsHtml}</div>
@@ -448,6 +473,7 @@ function renderSheet(){
   document.getElementById("columnaGrid").addEventListener("click", onColumnaClick);
   document.getElementById("sumarBtn").addEventListener("click", onSumar);
   document.getElementById("deshacerBtn").addEventListener("click", onDeshacer);
+  document.getElementById("otroArticuloBtn").addEventListener("click", onOtroArticulo);
   document.querySelector(".log-list").addEventListener("click", onLogRowDelete);
   const delArticleBtn = document.getElementById("deleteArticleBtn");
   if(delArticleBtn) delArticleBtn.addEventListener("click", onDeleteArticle);
@@ -539,8 +565,17 @@ function onSumar(){
 
   showToast("+" + piezas.toLocaleString("es-AR") + " piezas → " + FIELD_LABELS[builder.columna]);
 
+  // Se queda en el mismo artículo (no cierra el sheet) para poder seguir cargando
+  // otras columnas (ej. cajas cerradas y después abiertas) sin salir ni volver a buscar.
+  builder.cantidad = "";
+  builder.columna = null;
   renderList();
-  closeSheet(); // vuelve al listado principal (index)
+  renderSheet();
+}
+
+function onOtroArticulo(){
+  closeSheet();
+  searchInput.focus();
 }
 
 function onDeshacer(){
@@ -593,7 +628,7 @@ searchInput.addEventListener("keydown", (e) => {
   if(e.key === "Enter"){
     const val = searchInput.value.trim();
     if(!val) return;
-    openSheet(val);
+    openSheetChecked(val);
     searchInput.value = "";
     searchTerm = "";
     renderList();
@@ -653,7 +688,7 @@ function stopScan(){
 
 function onScanSuccess(decodedText){
   stopScan();
-  openSheet(decodedText);
+  openSheetChecked(decodedText);
 }
 
 /* ---------------- Export Excel ---------------- */
@@ -835,7 +870,7 @@ async function onImportFileChange(e){
   );
   if(!proceed) return;
 
-  state = { nextItem: 1, entries: {} };
+  state = { nextItem: 1, entries: {}, importedPns: [] };
   parsed.forEach(row => {
     const key = normPn(row.pn);
     if(!key || state.entries[key]) return;
@@ -843,6 +878,7 @@ async function onImportFileChange(e){
       pn: row.pn, itemNo: state.nextItem, desc: row.desc || "", spq: "",
       totals: emptyTotals(), log: []
     };
+    state.importedPns.push(key);
     state.nextItem += 1;
   });
   saveState();
@@ -853,7 +889,7 @@ async function onImportFileChange(e){
 /* ---------------- Reset ---------------- */
 document.getElementById("resetBtn").addEventListener("click", () => {
   if(confirm("¿Reiniciar todo el inventario? Se va a borrar todo lo cargado en este celular.")){
-    state = { nextItem: 1, entries: {} };
+    state = { nextItem: 1, entries: {}, importedPns: [] };
     saveState();
     renderList();
     showToast("Inventario reiniciado.");

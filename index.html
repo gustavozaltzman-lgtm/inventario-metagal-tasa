@@ -347,17 +347,20 @@ function escapeHtml(s){
 
 function isKnownPn(pnRaw){
   const key = normPn(pnRaw);
-  if(state.entries[key]) return true;
-  if(!state.importedPns || state.importedPns.length === 0) return true; // sin base cargada, no se restringe
-  return state.importedPns.includes(key);
+  if(state.entries[key]) return true; // ya cargado en este inventario (con o sin base)
+  if(state.importedPns && state.importedPns.length > 0) return state.importedPns.includes(key);
+  return false; // ningún artículo es "conocido" hasta que se carga por primera vez
 }
 
 function openSheetChecked(pnRaw){
   const pn = (pnRaw||"").trim();
   if(!pn) return;
   if(!isKnownPn(pn)){
+    const base = state.importedPns && state.importedPns.length > 0
+      ? "El código \"" + pn + "\" no está en la base cargada.\n\n"
+      : "El código \"" + pn + "\" todavía no fue cargado en este inventario.\n\n";
     const add = confirm(
-      "El código \"" + pn + "\" no está en la base cargada.\n\n" +
+      base +
       "Puede ser un error de lectura del código de barras.\n\n" +
       "¿Agregarlo de todos modos como artículo nuevo?"
     );
